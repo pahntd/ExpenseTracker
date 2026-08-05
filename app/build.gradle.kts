@@ -4,6 +4,7 @@ plugins {
     alias(libs.plugins.ksp)
     alias(libs.plugins.hilt)
     alias(libs.plugins.navigation.safe.args)
+    kotlin("kapt")
 }
 
 android {
@@ -68,7 +69,7 @@ dependencies {
     implementation(libs.kotlinx.coroutines.android)
     // Hilt
     implementation(libs.google.hilt.android)
-    ksp(libs.google.hilt.compiler)
+    kapt(libs.google.hilt.compiler)
     implementation(libs.androidx.hilt.navigation)
 
     testImplementation(libs.junit)
