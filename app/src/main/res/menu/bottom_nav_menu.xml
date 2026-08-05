@@ -1,0 +1,23 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/homeFragment"
+        android:icon="@drawable/ic_launcher_background"
+        android:title="Home"/>
+
+    <item
+        android:id="@+id/statisticsFragment"
+        android:icon="@drawable/ic_launcher_background"
+        android:title="Statistics"/>
+
+    <item
+        android:id="@+id/categoryFragment"
+        android:icon="@drawable/ic_launcher_background"
+        android:title="Category"/>
+
+    <item
+        android:id="@+id/settingsFragment"
+        android:icon="@drawable/ic_launcher_background"
+        android:title="Settings"/>
+
+</menu>
