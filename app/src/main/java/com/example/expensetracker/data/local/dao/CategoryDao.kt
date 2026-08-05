@@ -24,6 +24,15 @@ interface CategoryDao {
     @Delete
     suspend fun delete(category: CategoryEntity)
 
+    @Query("DELETE FROM categories")
+    suspend fun deleteAll()
+
+    @Query("SELECT COUNT(*) FROM categories")
+    suspend fun count(): Int
+
+    @Query("SELECT EXISTS(SELECT 1 FROM categories WHERE name = :name)")
+    suspend fun exists(name: String): Boolean
+
     @Query("DELETE FROM categories WHERE id = :id")
     suspend fun deleteById(id: Long)
 

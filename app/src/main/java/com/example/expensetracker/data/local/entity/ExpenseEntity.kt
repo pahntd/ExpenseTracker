@@ -13,7 +13,7 @@ import com.example.expensetracker.data.local.converter.TransactionType
             entity = CategoryEntity::class,
             parentColumns = ["id"],
             childColumns = ["categoryId"],
-            onDelete = ForeignKey.CASCADE
+            onDelete = ForeignKey.RESTRICT
         )
     ],
     indices = [Index("categoryId")]

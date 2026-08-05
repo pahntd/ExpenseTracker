@@ -43,11 +43,43 @@ interface ExpenseDao {
     @Query("SELECT * FROM expenses WHERE type = :type ORDER BY date DESC")
     fun findByType(type: TransactionType): Flow<List<ExpenseEntity>>
 
-    @Query("""
+    @Query(
+        """
         SELECT * FROM expenses
         WHERE title LIKE '%' || :keyword || '%'
         ORDER BY date DESC
-    """)
+    """
+    )
     fun search(keyword: String): Flow<List<ExpenseEntity>>
+
+    @Query(
+        """
+    SELECT * FROM expenses
+    WHERE date BETWEEN :startDate AND :endDate
+    ORDER BY date DESC
+"""
+    )
+    fun getBetweenDate(
+        startDate: Long,
+        endDate: Long
+    ): Flow<List<ExpenseEntity>>
+
+    @Query(
+        """
+    SELECT SUM(amount)
+    FROM expenses
+    WHERE type = 'INCOME'
+"""
+    )
+    suspend fun getTotalIncome(): Double?
+
+    @Query(
+        """
+    SELECT SUM(amount)
+    FROM expenses
+    WHERE type = 'EXPENSE'
+"""
+    )
+    suspend fun getTotalExpense(): Double?
 
 }
