@@ -9,5 +9,4 @@ data class CategoryEntity(
     val id: Long = 0,
     val name: String,
     val icon: String,
-    val color: Int?
 )

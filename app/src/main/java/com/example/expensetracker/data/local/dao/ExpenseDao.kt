@@ -46,7 +46,7 @@ interface ExpenseDao {
     @Query(
         """
         SELECT * FROM expenses
-        WHERE title LIKE '%' || :keyword || '%'
+        WHERE note LIKE '%' || :keyword || '%'
         ORDER BY date DESC
     """
     )
