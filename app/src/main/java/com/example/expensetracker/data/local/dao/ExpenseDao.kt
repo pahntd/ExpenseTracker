@@ -5,9 +5,11 @@ import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Transaction
 import androidx.room.Update
 import com.example.expensetracker.data.local.converter.TransactionType
 import com.example.expensetracker.data.local.entity.ExpenseEntity
+import com.example.expensetracker.data.local.relation.ExpenseWithCategory
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -81,5 +83,9 @@ interface ExpenseDao {
 """
     )
     suspend fun getTotalExpense(): Double?
+
+    @Transaction
+    @Query("SELECT * FROM expenses ORDER BY date DESC")
+    fun getAllWithCategory(): Flow<List<ExpenseWithCategory>>
 
 }

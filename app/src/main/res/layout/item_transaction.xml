@@ -12,8 +12,8 @@
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="72dp"
-        android:paddingHorizontal="16dp"
-        android:background="@color/white">
+        android:background="@color/white"
+        android:paddingHorizontal="16dp">
 
         <!-- Icon -->
 
@@ -32,7 +32,7 @@
         <!-- Title -->
 
         <TextView
-            android:id="@+id/tvTitle"
+            android:id="@+id/tvNote"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="12dp"
@@ -54,8 +54,8 @@
             android:textColor="#757575"
             android:textSize="13sp"
             app:layout_constraintEnd_toStartOf="@id/tvAmount"
-            app:layout_constraintStart_toStartOf="@id/tvTitle"
-            app:layout_constraintTop_toBottomOf="@id/tvTitle"
+            app:layout_constraintStart_toStartOf="@id/tvNote"
+            app:layout_constraintTop_toBottomOf="@id/tvNote"
             tools:text="Food &amp; Drink" />
 
         <!-- Amount -->
@@ -68,7 +68,7 @@
             android:textSize="16sp"
             android:textStyle="bold"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="@id/tvTitle"
+            app:layout_constraintTop_toTopOf="@id/tvNote"
             tools:text="-120,000 ₫" />
 
         <!-- Date -->

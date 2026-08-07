@@ -3,6 +3,7 @@ package com.example.expensetracker.repository
 import com.example.expensetracker.data.local.converter.TransactionType
 import com.example.expensetracker.data.local.dao.ExpenseDao
 import com.example.expensetracker.data.local.entity.ExpenseEntity
+import com.example.expensetracker.data.local.relation.ExpenseWithCategory
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 
@@ -12,6 +13,10 @@ class ExpenseRepository @Inject constructor(
 
     fun getAllExpenses(): Flow<List<ExpenseEntity>> {
         return expenseDao.getAll()
+    }
+
+    fun getAllExpensesWithCategory(): Flow<List<ExpenseWithCategory>> {
+        return expenseDao.getAllWithCategory()
     }
 
     suspend fun getExpenseById(id: Long): ExpenseEntity? {
