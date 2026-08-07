@@ -58,7 +58,7 @@ class ExpenseRepository @Inject constructor(
         return expenseDao.getBetweenDate(startDate, endDate)
     }
 
-    fun searchExpense(keyword: String): Flow<List<ExpenseEntity>> {
+    fun searchExpense(keyword: String): Flow<List<ExpenseWithCategory>> {
         return expenseDao.search(keyword)
     }
 

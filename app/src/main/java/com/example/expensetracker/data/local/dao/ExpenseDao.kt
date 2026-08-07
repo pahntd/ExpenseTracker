@@ -47,12 +47,16 @@ interface ExpenseDao {
 
     @Query(
         """
-        SELECT * FROM expenses
-        WHERE note LIKE '%' || :keyword || '%'
-        ORDER BY date DESC
+        SELECT expenses.* FROM expenses
+        INNER JOIN categories
+        ON expenses.categoryId = categories.id
+        WHERE
+        categories.name LIKE '%' || :keyword || '%'
+        OR expenses.note LIKE '%'||:keyword||'%'
+        ORDER BY expenses.date DESC
     """
     )
-    fun search(keyword: String): Flow<List<ExpenseEntity>>
+    fun search(keyword: String): Flow<List<ExpenseWithCategory>>
 
     @Query(
         """

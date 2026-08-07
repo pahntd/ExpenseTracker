@@ -37,7 +37,7 @@
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/cardBalance"
         android:layout_width="0dp"
-        android:layout_height="170dp"
+        android:layout_height="100dp"
         android:layout_marginHorizontal="20dp"
         android:layout_marginTop="20dp"
         app:cardBackgroundColor="#4CAF50"
@@ -90,7 +90,7 @@
 
         <com.google.android.material.card.MaterialCardView
             android:layout_width="0dp"
-            android:layout_height="110dp"
+            android:layout_height="70dp"
             android:layout_marginEnd="8dp"
             android:layout_weight="1"
             app:cardCornerRadius="16dp">
@@ -123,7 +123,7 @@
 
         <com.google.android.material.card.MaterialCardView
             android:layout_width="0dp"
-            android:layout_height="110dp"
+            android:layout_height="70dp"
             android:layout_marginStart="8dp"
             android:layout_weight="1"
             app:cardCornerRadius="16dp">
@@ -173,6 +173,15 @@
     <!-- RecyclerView -->
 
     <!-- Floating Action Button -->
+    <androidx.appcompat.widget.SearchView
+        android:id="@+id/searchView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="20dp"
+        android:layout_marginTop="12dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/tvListTrans" />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rvTransactions"
@@ -186,7 +195,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.9"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/tvListTrans"
+        app:layout_constraintTop_toBottomOf="@id/searchView"
         app:layout_constraintVertical_bias="1.0"
         tools:listitem="@layout/item_transaction" />
 

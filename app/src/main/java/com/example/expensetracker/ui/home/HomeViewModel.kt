@@ -1,14 +1,15 @@
 package com.example.expensetracker.ui.home
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.expensetracker.data.local.converter.TransactionType
 import com.example.expensetracker.repository.ExpenseRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -21,11 +22,14 @@ class HomeViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(HomeUiState())
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
 
+    private val searchQuery = MutableStateFlow("")
+
     init {
-        observeTransactions()
+        observeSummary()
+        observeSearchQuery()
     }
 
-    private fun observeTransactions() {
+    private fun observeSummary() {
         viewModelScope.launch {
             expenseRepository.getAllExpensesWithCategory().collect { list ->
                 val income = list.filter { it.expense.type == TransactionType.INCOME }
@@ -34,7 +38,6 @@ class HomeViewModel @Inject constructor(
                     .sumOf { it.expense.amount }
                 _uiState.update {
                     it.copy(
-                        transactions = list,
                         totalIncome = income,
                         totalExpense = expense,
                         balance = income - expense
@@ -44,4 +47,24 @@ class HomeViewModel @Inject constructor(
         }
     }
 
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private fun observeSearchQuery() {
+        viewModelScope.launch {
+            searchQuery.flatMapLatest { keyword ->
+                if (keyword.isBlank()) {
+                    expenseRepository.getAllExpensesWithCategory()
+                } else {
+                    expenseRepository.searchExpense(keyword)
+                }
+            }.collect { list ->
+                _uiState.update {
+                    it.copy(transactions = list)
+                }
+            }
+        }
+    }
+
+    fun updateSearchQuery(query: String) {
+        searchQuery.value = query
+    }
 }
