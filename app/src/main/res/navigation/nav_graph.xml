@@ -29,7 +29,14 @@
     <fragment
         android:id="@+id/addExpenseFragment"
         android:name="com.example.expensetracker.ui.add.AddExpenseFragment"
-        android:label="AddExpenseFragment" />
+        android:label="AddExpenseFragment">
+
+        <argument
+            android:name="expenseId"
+            android:defaultValue="-1L"
+            app:argType="long" />
+
+    </fragment>
     <fragment
         android:id="@+id/expenseDetailFragment"
         android:name="com.example.expensetracker.ui.detail.ExpenseDetailFragment"
@@ -38,6 +45,9 @@
         <argument
             android:name="expenseId"
             app:argType="long" />
+        <action
+            android:id="@+id/action_expenseDetailFragment_to_addExpenseFragment"
+            app:destination="@id/addExpenseFragment" />
 
     </fragment>
 

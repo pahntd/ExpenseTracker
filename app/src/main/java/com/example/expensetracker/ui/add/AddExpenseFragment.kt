@@ -3,7 +3,6 @@ package com.example.expensetracker.ui.add
 import android.app.DatePickerDialog
 import android.icu.util.Calendar
 import android.os.Bundle
-import android.util.Log
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
@@ -18,9 +17,11 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import com.example.expensetracker.R
 import com.example.expensetracker.data.local.converter.TransactionType
+import com.example.expensetracker.data.local.relation.ExpenseWithCategory
 import com.example.expensetracker.databinding.FragmentAddExpenseBinding
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
+import java.text.NumberFormat
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -67,9 +68,6 @@ class AddExpenseFragment : Fragment() {
                         val names = state.categories.map { it.name }
                         categoryAdapter.clear()
                         categoryAdapter.addAll(names)
-                        binding.etDate.setText(
-                            state.date.toDateString()
-                        )
                     }
                 }
                 launch {
@@ -85,6 +83,10 @@ class AddExpenseFragment : Fragment() {
 
                             AddExpenseEventState.Success -> {
                                 findNavController().popBackStack()
+                            }
+
+                            is AddExpenseEventState.EditDataLoaded -> {
+                                renderEditData(event.expense)
                             }
                         }
                     }
@@ -102,6 +104,9 @@ class AddExpenseFragment : Fragment() {
                     calendar.set(year, month, day)
                     val millis = calendar.timeInMillis
                     addExpenseViewModel.updateDate(millis)
+                    binding.etDate.setText(
+                        millis.toDateString()
+                    )
                 },
                 calendar.get(Calendar.YEAR),
                 calendar.get(Calendar.MONTH),
@@ -128,6 +133,33 @@ class AddExpenseFragment : Fragment() {
         }
     }
 
+    private fun renderEditData(expense: ExpenseWithCategory) {
+        binding.etAmount.setText(expense.expense.amount.toCurrency())
+
+        binding.etNote.setText(expense.expense.note)
+
+        binding.etDate.setText(
+            expense.expense.date.toDateString()
+        )
+
+        when (expense.expense.type) {
+            TransactionType.EXPENSE -> {
+                binding.rbExpense.isChecked = true
+            }
+
+            TransactionType.INCOME -> {
+                binding.rbIncome.isChecked = true
+            }
+        }
+
+        expense.category?.let {
+            binding.actCategory.setText(
+                it.name,
+                false
+            )
+        }
+    }
+
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
@@ -138,5 +170,11 @@ class AddExpenseFragment : Fragment() {
             "dd/MM/yyyy",
             Locale.getDefault()
         ).format(Date(this))
+    }
+
+    private fun Double.toCurrency(): String {
+        return NumberFormat
+            .getNumberInstance(Locale("vi", "VN"))
+            .format(this)
     }
 }

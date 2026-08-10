@@ -97,4 +97,7 @@ interface ExpenseDao {
     @Query("SELECT * FROM expenses WHERE id = :id")
     fun getExpenseWithCategoryById(id: Long): Flow<ExpenseWithCategory?>
 
+    @Transaction
+    @Query("SELECT * FROM expenses WHERE id = :id")
+    suspend fun findExpenseWithCategoryById(id: Long): ExpenseWithCategory?
 }

@@ -1,5 +1,6 @@
 package com.example.expensetracker.ui.add
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.expensetracker.data.local.converter.TransactionType
@@ -19,7 +20,8 @@ import javax.inject.Inject
 @HiltViewModel
 class AddExpenseViewModel @Inject constructor(
     private val categoryRepository: CategoryRepository,
-    private val expenseRepository: ExpenseRepository
+    private val expenseRepository: ExpenseRepository,
+    savedStateHandle: SavedStateHandle
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(AddExpenseUiState())
     val uiState = _uiState.asStateFlow()
@@ -27,8 +29,15 @@ class AddExpenseViewModel @Inject constructor(
     private val _eventState = MutableSharedFlow<AddExpenseEventState>()
     val eventState = _eventState.asSharedFlow()
 
+    private val expenseId: Long =
+        savedStateHandle["expenseId"] ?: -1L
+
+    private val isEditMode: Boolean
+        get() = expenseId != -1L
+
     init {
         loadCategories()
+        if (isEditMode) loadExpenseEditMode()
     }
 
     private fun loadCategories() {
@@ -38,6 +47,25 @@ class AddExpenseViewModel @Inject constructor(
                     it.copy(categories = categories)
                 }
             }
+        }
+    }
+
+    private fun loadExpenseEditMode() {
+        viewModelScope.launch {
+            val expenseWithCategory =
+                expenseRepository.findExpenseWithCategoryById(expenseId) ?: return@launch
+            _uiState.update {
+                it.copy(
+                    amount = expenseWithCategory.expense.amount.toString(),
+                    type = expenseWithCategory.expense.type,
+                    selectedCategory = expenseWithCategory.category,
+                    date = expenseWithCategory.expense.date,
+                    note = expenseWithCategory.expense.note.orEmpty()
+                )
+            }
+            _eventState.emit(
+                AddExpenseEventState.EditDataLoaded(expenseWithCategory)
+            )
         }
     }
 
@@ -53,9 +81,15 @@ class AddExpenseViewModel @Inject constructor(
         }
     }
 
-    fun updateCategory(position : Int) {
+    fun updateCategory(position: Int) {
         _uiState.update {
             it.copy(selectedCategory = it.categories[position])
+        }
+    }
+
+    fun updateCategory(category: CategoryEntity) {
+        _uiState.update {
+            it.copy(selectedCategory = category)
         }
     }
 
@@ -109,7 +143,11 @@ class AddExpenseViewModel @Inject constructor(
 
                 note = state.note
             )
-            expenseRepository.insertExpense(expense)
+            if (isEditMode) {
+                expenseRepository.updateExpense(expense.copy(id = expenseId))
+            } else {
+                expenseRepository.insertExpense(expense)
+            }
             _eventState.emit(AddExpenseEventState.Success)
         }
     }

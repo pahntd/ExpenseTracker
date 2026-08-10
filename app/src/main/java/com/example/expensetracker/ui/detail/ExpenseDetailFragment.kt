@@ -9,6 +9,8 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.navigation.fragment.findNavController
+import androidx.navigation.fragment.navArgs
 import com.example.expensetracker.databinding.FragmentExpenseDetailBinding
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
@@ -26,6 +28,8 @@ class ExpenseDetailFragment : Fragment() {
 
     private val viewModel: ExpenseDetailViewModel by viewModels()
 
+    private val args: ExpenseDetailFragmentArgs by navArgs()
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -37,6 +41,7 @@ class ExpenseDetailFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         observeUiState()
+        setupClick()
     }
 
     private fun observeUiState() {
@@ -60,6 +65,16 @@ class ExpenseDetailFragment : Fragment() {
                     }
                 }
             }
+        }
+    }
+
+    private fun setupClick() {
+        binding.btnEdit.setOnClickListener {
+            findNavController().navigate(
+                ExpenseDetailFragmentDirections.actionExpenseDetailFragmentToAddExpenseFragment(
+                    expenseId = args.expenseId
+                )
+            )
         }
     }
 
