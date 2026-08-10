@@ -92,4 +92,9 @@ interface ExpenseDao {
     @Query("SELECT * FROM expenses ORDER BY date DESC")
     fun getAllWithCategory(): Flow<List<ExpenseWithCategory>>
 
+
+    @Transaction
+    @Query("SELECT * FROM expenses WHERE id = :id")
+    fun getExpenseWithCategoryById(id: Long): Flow<ExpenseWithCategory?>
+
 }

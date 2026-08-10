@@ -23,6 +23,10 @@ class ExpenseRepository @Inject constructor(
         return expenseDao.findById(id)
     }
 
+    fun getExpenseWithCategoryById(id: Long): Flow<ExpenseWithCategory?> {
+        return expenseDao.getExpenseWithCategoryById(id)
+    }
+
     suspend fun insertExpense(expense: ExpenseEntity) {
         expenseDao.insert(expense)
     }

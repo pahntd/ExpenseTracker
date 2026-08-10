@@ -46,9 +46,13 @@ class HomeFragment : Fragment() {
     }
 
     private fun setupRecyclerView() {
-        adapter = TransactionAdapter { it ->
-            Log.e(TAG, "setupRecyclerView: navigate to DETAIL Screen")
-        }
+        adapter = TransactionAdapter(onClickItem = {
+            findNavController().navigate(
+                HomeFragmentDirections.actionHomeFragmentToExpenseDetailFragment(
+                    it.expense.id
+                )
+            )
+        })
         binding.rvTransactions.adapter = adapter
         binding.rvTransactions.layoutManager = LinearLayoutManager(requireContext())
     }
@@ -91,7 +95,7 @@ class HomeFragment : Fragment() {
         _binding = null
     }
 
-    fun Double.toCurrency(): String {
+    private fun Double.toCurrency(): String {
         return NumberFormat
             .getNumberInstance(Locale("vi", "VN"))
             .format(this)

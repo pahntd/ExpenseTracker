@@ -18,15 +18,28 @@
     <fragment
         android:id="@+id/homeFragment"
         android:name="com.example.expensetracker.ui.home.HomeFragment"
-        android:label="Home" >
+        android:label="Home">
         <action
             android:id="@+id/action_homeFragment_to_addExpenseFragment"
             app:destination="@id/addExpenseFragment" />
+        <action
+            android:id="@+id/action_homeFragment_to_expenseDetailFragment"
+            app:destination="@id/expenseDetailFragment" />
     </fragment>
     <fragment
         android:id="@+id/addExpenseFragment"
         android:name="com.example.expensetracker.ui.add.AddExpenseFragment"
         android:label="AddExpenseFragment" />
+    <fragment
+        android:id="@+id/expenseDetailFragment"
+        android:name="com.example.expensetracker.ui.detail.ExpenseDetailFragment"
+        android:label="ExpenseDetailFragment">
+
+        <argument
+            android:name="expenseId"
+            app:argType="long" />
+
+    </fragment>
 
 
 </navigation>
