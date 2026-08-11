@@ -7,6 +7,7 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
 import com.example.expensetracker.data.local.entity.CategoryEntity
+import com.example.expensetracker.data.local.relation.CategoryWithExpenseCount
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -45,4 +46,19 @@ interface CategoryDao {
     @Query("SELECT * FROM categories WHERE name = :name LIMIT 1")
     suspend fun findByName(name: String): CategoryEntity?
 
+    @Query(
+        """
+    SELECT 
+        categories.id AS categoryId,
+        categories.name AS name,
+        categories.icon AS icon,
+        COUNT(expenses.id) AS expenseCount
+    FROM categories
+    LEFT JOIN expenses
+        ON categories.id = expenses.categoryId
+    GROUP BY categories.id
+    ORDER BY categories.name ASC
+"""
+    )
+    fun getCategoriesWithExpenseCount(): Flow<List<CategoryWithExpenseCount>>
 }

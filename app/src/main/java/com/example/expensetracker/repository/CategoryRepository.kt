@@ -2,6 +2,7 @@ package com.example.expensetracker.repository
 
 import com.example.expensetracker.data.local.dao.CategoryDao
 import com.example.expensetracker.data.local.entity.CategoryEntity
+import com.example.expensetracker.data.local.relation.CategoryWithExpenseCount
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 
@@ -39,6 +40,10 @@ class CategoryRepository @Inject constructor(
 
     suspend fun countCategories(): Int {
         return categoryDao.count()
+    }
+
+    fun getCategoriesWithCount(): Flow<List<CategoryWithExpenseCount>> {
+        return categoryDao.getCategoriesWithExpenseCount()
     }
 
 }
