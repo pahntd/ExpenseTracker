@@ -1,55 +1,77 @@
 <?xml version="1.0" encoding="utf-8"?>
+
 <navigation xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/nav_graph"
+    android:id="@+id/root_nav_graph"
     app:startDestination="@id/splashFragment">
 
     <fragment
         android:id="@+id/splashFragment"
         android:name="com.example.expensetracker.ui.splash.SplashFragment"
         android:label="Splash">
+
         <action
-            android:id="@+id/action_splashFragment_to_homeFragment"
-            app:destination="@id/homeFragment"
+            android:id="@+id/action_splashFragment_to_mainGraph"
+            app:destination="@id/mainGraph"
             app:popUpTo="@id/splashFragment"
             app:popUpToInclusive="true" />
-    </fragment>
-    <fragment
-        android:id="@+id/homeFragment"
-        android:name="com.example.expensetracker.ui.home.HomeFragment"
-        android:label="Home">
-        <action
-            android:id="@+id/action_homeFragment_to_addExpenseFragment"
-            app:destination="@id/addExpenseFragment" />
-        <action
-            android:id="@+id/action_homeFragment_to_expenseDetailFragment"
-            app:destination="@id/expenseDetailFragment" />
-    </fragment>
-    <fragment
-        android:id="@+id/addExpenseFragment"
-        android:name="com.example.expensetracker.ui.add.AddExpenseFragment"
-        android:label="AddExpenseFragment">
-
-        <argument
-            android:name="expenseId"
-            android:defaultValue="-1L"
-            app:argType="long" />
-
-    </fragment>
-    <fragment
-        android:id="@+id/expenseDetailFragment"
-        android:name="com.example.expensetracker.ui.detail.ExpenseDetailFragment"
-        android:label="ExpenseDetailFragment">
-
-        <argument
-            android:name="expenseId"
-            app:argType="long" />
-        <action
-            android:id="@+id/action_expenseDetailFragment_to_addExpenseFragment"
-            app:destination="@id/addExpenseFragment" />
 
     </fragment>
 
+    <navigation
+        android:id="@+id/mainGraph"
+        app:startDestination="@id/homeFragment">
+
+        <fragment
+            android:id="@+id/homeFragment"
+            android:name="com.example.expensetracker.ui.home.HomeFragment"
+            android:label="Home">
+
+            <action
+                android:id="@+id/action_homeFragment_to_addExpenseFragment"
+                app:destination="@id/addExpenseFragment" />
+
+            <action
+                android:id="@+id/action_homeFragment_to_expenseDetailFragment"
+                app:destination="@id/expenseDetailFragment" />
+
+        </fragment>
+
+        <fragment
+            android:id="@+id/categoryFragment"
+            android:name="com.example.expensetracker.ui.category.CategoryFragment"
+            android:label="Category" />
+
+        <!-- Màn hình phụ -->
+
+        <fragment
+            android:id="@+id/addExpenseFragment"
+            android:name="com.example.expensetracker.ui.add.AddExpenseFragment"
+            android:label="AddExpenseFragment">
+
+            <argument
+                android:name="expenseId"
+                android:defaultValue="-1L"
+                app:argType="long" />
+
+        </fragment>
+
+        <fragment
+            android:id="@+id/expenseDetailFragment"
+            android:name="com.example.expensetracker.ui.detail.ExpenseDetailFragment"
+            android:label="ExpenseDetailFragment">
+
+            <argument
+                android:name="expenseId"
+                app:argType="long" />
+
+            <action
+                android:id="@+id/action_expenseDetailFragment_to_addExpenseFragment"
+                app:destination="@id/addExpenseFragment" />
+
+        </fragment>
+
+    </navigation>
 
 </navigation>
