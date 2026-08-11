@@ -1,10 +1,13 @@
 package com.example.expensetracker.ui.detail
 
+import android.content.DialogInterface
 import android.os.Bundle
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
@@ -40,28 +43,47 @@ class ExpenseDetailFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        observeUiState()
+        observeState()
         setupClick()
     }
 
-    private fun observeUiState() {
+    private fun observeState() {
         viewLifecycleOwner.lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.uiState.collect { state ->
-                    state.expense?.let { expenseWithCategory ->
-                        binding.tvAmount.text =
-                            expenseWithCategory.expense.amount.toCurrency()
-                        binding.tvCategory.text =
-                            expenseWithCategory.category.name
-                        binding.tvDate.text =
-                            SimpleDateFormat(
-                                "dd/MM/yyyy",
-                                Locale.getDefault()
-                            ).format(
-                                Date(expenseWithCategory.expense.date)
-                            )
-                        binding.tvNote.text =
-                            expenseWithCategory.expense.note ?: "No note"
+                launch {
+                    viewModel.uiState.collect { state ->
+                        state.expense?.let { expenseWithCategory ->
+                            binding.tvAmount.text =
+                                expenseWithCategory.expense.amount.toCurrency()
+                            binding.tvCategory.text =
+                                expenseWithCategory.category.name
+                            binding.tvDate.text =
+                                SimpleDateFormat(
+                                    "dd/MM/yyyy",
+                                    Locale.getDefault()
+                                ).format(
+                                    Date(expenseWithCategory.expense.date)
+                                )
+                            binding.tvNote.text =
+                                expenseWithCategory.expense.note ?: "No note"
+                        }
+                    }
+                }
+                launch {
+                    viewModel.eventState.collect { event ->
+                        when (event) {
+                            ExpenseDetailEventState.DeleteSuccess -> {
+                                findNavController().popBackStack()
+                            }
+
+                            is ExpenseDetailEventState.Error -> {
+                                Toast.makeText(
+                                    requireContext(),
+                                    event.message,
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
+                        }
                     }
                 }
             }
@@ -76,6 +98,19 @@ class ExpenseDetailFragment : Fragment() {
                 )
             )
         }
+        binding.btnDelete.setOnClickListener {
+            showDeleteDialog()
+        }
+    }
+
+    private fun showDeleteDialog() {
+        AlertDialog.Builder(requireContext())
+            .setTitle("Delete?")
+            .setMessage("Are you sure you want to delete this expense?")
+            .setNegativeButton("Cancel", null)
+            .setPositiveButton("Delete") { _, _ ->
+                viewModel.deleteExpense()
+            }.show()
     }
 
     override fun onDestroyView() {
