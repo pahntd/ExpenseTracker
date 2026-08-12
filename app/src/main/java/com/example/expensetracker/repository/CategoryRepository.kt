@@ -26,7 +26,7 @@ class CategoryRepository @Inject constructor(
         return categoryDao.insert(category)
     }
 
-    suspend fun updateCategory(category: CategoryEntity):Int {
+    suspend fun updateCategory(category: CategoryEntity): Int {
         return categoryDao.update(category)
     }
 
@@ -36,6 +36,10 @@ class CategoryRepository @Inject constructor(
 
     suspend fun deleteAllCategories() {
         categoryDao.deleteAll()
+    }
+
+    suspend fun deleteById(id: Long) {
+        categoryDao.deleteById(id)
     }
 
     suspend fun countCategories(): Int {

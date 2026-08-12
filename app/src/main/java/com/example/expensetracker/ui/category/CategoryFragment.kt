@@ -1,19 +1,20 @@
 package com.example.expensetracker.ui.category
 
 import android.os.Bundle
-import android.util.Log
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.example.expensetracker.data.local.relation.CategoryWithExpenseCount
 import com.example.expensetracker.databinding.FragmentCategoryBinding
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
@@ -51,7 +52,7 @@ class CategoryFragment : Fragment() {
                 )
             },
             onClickDelete = { item ->
-
+                deleteCategory(item)
             }
         )
         binding.rvCategories.adapter = adapter
@@ -74,6 +75,29 @@ class CategoryFragment : Fragment() {
                 }
             }
         }
+    }
+
+    private fun deleteCategory(category: CategoryWithExpenseCount) {
+        if (category.expenseCount > 0) {
+            Toast.makeText(
+                requireContext(),
+                "This category is in use and cannot be deleted !",
+                Toast.LENGTH_SHORT
+            ).show()
+            return
+        }
+        showDeleteDialog(category)
+    }
+
+    private fun showDeleteDialog(category: CategoryWithExpenseCount) {
+        AlertDialog.Builder(requireContext())
+            .setTitle("Delete Category?")
+            .setMessage("Are you sure you want to delete \"${category.name}\"?")
+            .setNegativeButton("Cancel", null)
+            .setPositiveButton("Delete") { _, _ ->
+                categoryViewModel.deleteCategoryById(category.categoryId)
+            }
+            .show()
     }
 
     override fun onDestroyView() {

@@ -55,11 +55,17 @@ class CategoryViewModel @Inject constructor(
             )
             if (result <= 0) {
                 _eventState.emit(
-                    CategoryEventState.Error("Update failed!")
+                    CategoryEventState.Error("Category already exists !")
                 )
                 return@launch
             }
             _eventState.emit(CategoryEventState.CategoryAdded)
+        }
+    }
+
+    fun deleteCategoryById(id: Long) {
+        viewModelScope.launch {
+            categoryRepository.deleteById(id)
         }
     }
 
