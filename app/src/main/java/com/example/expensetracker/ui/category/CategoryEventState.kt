@@ -6,4 +6,5 @@ sealed interface CategoryEventState {
 
     data object CategoryAdded : CategoryEventState
 
+    data object CategoryUpdated : CategoryEventState
 }

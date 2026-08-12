@@ -43,15 +43,23 @@ class CategoryFragment : Fragment() {
 
     private fun setupRecyclerView() {
         binding.rvCategories.layoutManager = LinearLayoutManager(requireContext())
-        adapter = CategoryRecyclerViewAdapter({
-            Log.d(TAG, "setupRecyclerView: Click to detail category")
-        })
+        adapter = CategoryRecyclerViewAdapter(
+            onClickEdit = { item ->
+                AddCategoryDialog.newInstance(item).show(
+                    childFragmentManager,
+                    "AddCategoryDialog"
+                )
+            },
+            onClickDelete = { item ->
+
+            }
+        )
         binding.rvCategories.adapter = adapter
     }
 
     private fun setupListener() {
         binding.fabAddCategory.setOnClickListener {
-            AddCategoryDialog().show(
+            AddCategoryDialog.newInstance().show(
                 childFragmentManager,
                 "AddCategoryDialog"
             )

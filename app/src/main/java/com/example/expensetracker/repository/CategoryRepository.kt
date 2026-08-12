@@ -26,8 +26,8 @@ class CategoryRepository @Inject constructor(
         return categoryDao.insert(category)
     }
 
-    suspend fun updateCategory(category: CategoryEntity) {
-        categoryDao.update(category)
+    suspend fun updateCategory(category: CategoryEntity):Int {
+        return categoryDao.update(category)
     }
 
     suspend fun deleteCategory(category: CategoryEntity) {

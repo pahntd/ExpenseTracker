@@ -46,6 +46,23 @@ class CategoryViewModel @Inject constructor(
         }
     }
 
+    fun updateCategory(category: CategoryEntity) {
+        viewModelScope.launch {
+            val result = categoryRepository.updateCategory(
+                category.copy(
+                    name = normalizeCategoryName(category.name)
+                )
+            )
+            if (result <= 0) {
+                _eventState.emit(
+                    CategoryEventState.Error("Update failed!")
+                )
+                return@launch
+            }
+            _eventState.emit(CategoryEventState.CategoryAdded)
+        }
+    }
+
     private fun normalizeCategoryName(name: String): String {
         return name.trim()
             .replace(Regex("\\s+"), " ")

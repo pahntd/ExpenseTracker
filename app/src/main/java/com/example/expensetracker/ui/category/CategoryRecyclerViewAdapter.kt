@@ -11,7 +11,8 @@ import com.example.expensetracker.data.local.relation.CategoryWithExpenseCount
 import com.example.expensetracker.databinding.ItemCategoryBinding
 
 class CategoryRecyclerViewAdapter(
-    private val onClickItem: (CategoryWithExpenseCount) -> Unit
+    private val onClickEdit: (CategoryWithExpenseCount) -> Unit,
+    private val onClickDelete: (CategoryWithExpenseCount) -> Unit
 ) :
     ListAdapter<CategoryWithExpenseCount, CategoryRecyclerViewAdapter.CategoryViewHolder>(
         DiffCallback
@@ -27,8 +28,11 @@ class CategoryRecyclerViewAdapter(
                 tvName.text = item.name
                 tvExpenseCount.text = item.expenseCount.toString()
             }
-            binding.root.setOnClickListener {
-                onClickItem(item)
+            binding.btnEditCate.setOnClickListener {
+                onClickEdit(item)
+            }
+            binding.btnDeleteCate.setOnClickListener {
+                onClickDelete(item)
             }
         }
     }

@@ -10,6 +10,7 @@ import android.widget.FrameLayout
 import android.widget.GridLayout
 import android.widget.ImageView
 import android.widget.Toast
+import androidx.core.os.bundleOf
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
@@ -18,6 +19,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import com.example.expensetracker.R
 import com.example.expensetracker.data.local.IconMapper
 import com.example.expensetracker.data.local.entity.CategoryEntity
+import com.example.expensetracker.data.local.relation.CategoryWithExpenseCount
 import com.example.expensetracker.databinding.AddCategoryDialogLayoutBinding
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
@@ -52,6 +54,16 @@ class AddCategoryDialog : DialogFragment() {
         ownerProducer = { requireParentFragment() }
     )
 
+    private val categoryId: Long?
+        get() = arguments?.getLong(ARG_CATEGORY_ID)?.takeIf { it != 0L }
+    private val categoryName: String?
+        get() = arguments?.getString(ARG_CATEGORY_NAME)
+    private val categoryIcon: String?
+        get() = arguments?.getString(ARG_CATEGORY_ICON)
+
+    private val isEditMode: Boolean
+        get() = categoryId != null
+
     override fun onStart() {
         super.onStart()
         dialog?.window?.setLayout(
@@ -71,9 +83,21 @@ class AddCategoryDialog : DialogFragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        if (isEditMode) {
+            loadData()
+        }
         setupIcon()
         setupListener()
         observeEvent()
+    }
+
+    private fun loadData() {
+        categoryName?.let {
+            binding.etName.setText(it)
+        }
+        categoryIcon?.let {
+            selectedIcon = it
+        }
     }
 
     private fun setupIcon() {
@@ -134,9 +158,15 @@ class AddCategoryDialog : DialogFragment() {
             return
         }
 
-        categoryViewModel.addCategory(
-            CategoryEntity(name = name, icon = selectedIcon)
-        )
+        if (isEditMode) {
+            categoryViewModel.updateCategory(
+                CategoryEntity(id = categoryId!!, name = name, icon = selectedIcon)
+            )
+        } else {
+            categoryViewModel.addCategory(
+                CategoryEntity(name = name, icon = selectedIcon)
+            )
+        }
     }
 
     private fun observeEvent() {
@@ -155,6 +185,10 @@ class AddCategoryDialog : DialogFragment() {
                                 Toast.LENGTH_SHORT
                             ).show()
                         }
+
+                        CategoryEventState.CategoryUpdated -> {
+                            dismiss()
+                        }
                     }
                 }
             }
@@ -168,5 +202,25 @@ class AddCategoryDialog : DialogFragment() {
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
+    }
+
+    companion object {
+        private const val ARG_CATEGORY_ID = "categoryId"
+        private const val ARG_CATEGORY_NAME = "categoryName"
+        private const val ARG_CATEGORY_ICON = "categoryIcon"
+
+        fun newInstance(
+            category: CategoryWithExpenseCount? = null
+        ): AddCategoryDialog {
+            return AddCategoryDialog().apply {
+                if (category != null) {
+                    arguments = bundleOf(
+                        ARG_CATEGORY_ID to category.categoryId,
+                        ARG_CATEGORY_ICON to category.icon,
+                        ARG_CATEGORY_NAME to category.name
+                    )
+                }
+            }
+        }
     }
 }
