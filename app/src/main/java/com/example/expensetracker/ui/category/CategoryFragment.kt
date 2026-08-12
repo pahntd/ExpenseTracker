@@ -51,7 +51,10 @@ class CategoryFragment : Fragment() {
 
     private fun setupListener() {
         binding.fabAddCategory.setOnClickListener {
-            Log.d(TAG, "setupListener: navigate to add category")
+            AddCategoryDialog().show(
+                childFragmentManager,
+                "AddCategoryDialog"
+            )
         }
     }
 

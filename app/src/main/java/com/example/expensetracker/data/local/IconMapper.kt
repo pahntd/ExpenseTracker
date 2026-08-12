@@ -19,6 +19,20 @@ object IconMapper {
 
             "ic_health" -> R.drawable.ic_health
 
+            "ic_air_conditioner" -> R.drawable.ic_air_conditioner
+
+            "ic_bath_outdoor" -> R.drawable.ic_bath_outdoor
+
+            "ic_door" -> R.drawable.ic_door
+
+            "ic_hiking" -> R.drawable.ic_hiking
+
+            "ic_remote" -> R.drawable.ic_remote
+
+            "icon_flower" -> R.drawable.icon_flower
+
+            "icon_grass" -> R.drawable.icon_grass
+
             else -> R.drawable.ic_other
         }
     }

@@ -22,8 +22,8 @@ class CategoryRepository @Inject constructor(
         return categoryDao.findByName(name)
     }
 
-    suspend fun insertCategory(category: CategoryEntity) {
-        categoryDao.insert(category)
+    suspend fun insertCategory(category: CategoryEntity): Long {
+        return categoryDao.insert(category)
     }
 
     suspend fun updateCategory(category: CategoryEntity) {
