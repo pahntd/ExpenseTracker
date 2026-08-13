@@ -75,6 +75,10 @@
             android:id="@+id/settingsFragment"
             android:name="com.example.expensetracker.ui.setting.SettingFragment"
             android:label="SettingFragment" />
+        <fragment
+            android:id="@+id/statisticsFragment"
+            android:name="com.example.expensetracker.ui.statistics.StatisticsFragment"
+            android:label="fragment_statistics" />
 
     </navigation>
 

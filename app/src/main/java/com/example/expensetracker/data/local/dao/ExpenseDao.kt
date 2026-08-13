@@ -9,6 +9,7 @@ import androidx.room.Transaction
 import androidx.room.Update
 import com.example.expensetracker.data.local.converter.TransactionType
 import com.example.expensetracker.data.local.entity.ExpenseEntity
+import com.example.expensetracker.data.local.relation.CategoryWithAmountSummary
 import com.example.expensetracker.data.local.relation.ExpenseWithCategory
 import kotlinx.coroutines.flow.Flow
 
@@ -100,4 +101,38 @@ interface ExpenseDao {
     @Transaction
     @Query("SELECT * FROM expenses WHERE id = :id")
     suspend fun findExpenseWithCategoryById(id: Long): ExpenseWithCategory?
+
+    @Query(
+        """
+    SELECT
+        categories.id AS categoryId,
+        categories.name AS categoryName,
+        categories.icon AS icon,
+        SUM(expenses.amount) AS totalAmount
+    FROM expenses
+    INNER JOIN categories
+        ON expenses.categoryId = categories.id
+    WHERE expenses.type = 'EXPENSE'
+    GROUP BY categories.id
+    ORDER BY totalAmount DESC
+"""
+    )
+    suspend fun getExpenseByCategory(): List<CategoryWithAmountSummary>
+
+    @Query(
+        """
+    SELECT
+        categories.id AS categoryId,
+        categories.name AS categoryName,
+        categories.icon AS icon,
+        SUM(expenses.amount) AS totalAmount
+    FROM expenses
+    INNER JOIN categories
+        ON expenses.categoryId = categories.id
+    WHERE expenses.type = 'INCOME'
+    GROUP BY categories.id
+    ORDER BY totalAmount DESC
+"""
+    )
+    suspend fun getIncomeByCategory(): List<CategoryWithAmountSummary>
 }

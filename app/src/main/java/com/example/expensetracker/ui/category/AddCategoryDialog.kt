@@ -17,11 +17,11 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.example.expensetracker.R
-import com.example.expensetracker.data.local.IconMapper
+import com.example.expensetracker.utils.IconMapper
 import com.example.expensetracker.data.local.entity.CategoryEntity
 import com.example.expensetracker.data.local.relation.CategoryWithExpenseCount
 import com.example.expensetracker.databinding.AddCategoryDialogLayoutBinding
-import kotlinx.coroutines.flow.collect
+import com.example.expensetracker.utils.dp
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
@@ -110,7 +110,7 @@ class AddCategoryDialog : DialogFragment() {
 
             val params = GridLayout.LayoutParams().apply {
                 width = 0
-                height = 56.dp()
+                height = 56.dp(requireContext())
                 columnSpec = GridLayout.spec(
                     GridLayout.UNDEFINED,
                     1f
@@ -193,10 +193,6 @@ class AddCategoryDialog : DialogFragment() {
                 }
             }
         }
-    }
-
-    private fun Int.dp(): Int {
-        return (this * Resources.getSystem().displayMetrics.density).roundToInt()
     }
 
     override fun onDestroyView() {

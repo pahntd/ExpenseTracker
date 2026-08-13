@@ -6,7 +6,7 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
-import com.example.expensetracker.data.local.IconMapper
+import com.example.expensetracker.utils.IconMapper
 import com.example.expensetracker.data.local.relation.CategoryWithExpenseCount
 import com.example.expensetracker.databinding.ItemCategoryBinding
 

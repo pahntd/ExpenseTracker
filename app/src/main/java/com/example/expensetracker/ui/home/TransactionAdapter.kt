@@ -5,12 +5,10 @@ import android.graphics.Color
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import android.widget.TextView
-import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
-import com.example.expensetracker.R
-import com.example.expensetracker.data.local.IconMapper
+import com.example.expensetracker.utils.IconMapper
 import com.example.expensetracker.data.local.converter.TransactionType
 import com.example.expensetracker.data.local.relation.ExpenseWithCategory
 import com.example.expensetracker.databinding.ItemTransactionBinding

@@ -19,6 +19,8 @@ import com.example.expensetracker.R
 import com.example.expensetracker.data.local.converter.TransactionType
 import com.example.expensetracker.data.local.relation.ExpenseWithCategory
 import com.example.expensetracker.databinding.FragmentAddExpenseBinding
+import com.example.expensetracker.utils.toCurrency
+import com.example.expensetracker.utils.toDateString
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import java.text.NumberFormat
@@ -163,18 +165,5 @@ class AddExpenseFragment : Fragment() {
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
-    }
-
-    private fun Long.toDateString(): String {
-        return SimpleDateFormat(
-            "dd/MM/yyyy",
-            Locale.getDefault()
-        ).format(Date(this))
-    }
-
-    private fun Double.toCurrency(): String {
-        return NumberFormat
-            .getNumberInstance(Locale("vi", "VN"))
-            .format(this)
     }
 }

@@ -1,4 +1,4 @@
-package com.example.expensetracker.data.local
+package com.example.expensetracker.utils
 
 import com.example.expensetracker.R
 

@@ -15,6 +15,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import com.example.expensetracker.databinding.FragmentExpenseDetailBinding
+import com.example.expensetracker.utils.toCurrency
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import java.text.NumberFormat
@@ -116,11 +117,5 @@ class ExpenseDetailFragment : Fragment() {
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
-    }
-
-    private fun Double.toCurrency(): String {
-        return NumberFormat
-            .getNumberInstance(Locale("vi", "VN"))
-            .format(this)
     }
 }
