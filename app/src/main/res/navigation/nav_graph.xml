@@ -71,6 +71,10 @@
                 app:destination="@id/addExpenseFragment" />
 
         </fragment>
+        <fragment
+            android:id="@+id/settingsFragment"
+            android:name="com.example.expensetracker.ui.setting.SettingFragment"
+            android:label="SettingFragment" />
 
     </navigation>
 
