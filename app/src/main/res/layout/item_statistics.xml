@@ -35,7 +35,8 @@
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toStartOf="@id/tvAmount"
             app:layout_constraintStart_toEndOf="@id/ivIcon"
-            app:layout_constraintTop_toTopOf="parent" />
+            app:layout_constraintTop_toTopOf="parent"
+            android:maxLines="1"/>
 
         <TextView
             android:id="@+id/tvAmount"

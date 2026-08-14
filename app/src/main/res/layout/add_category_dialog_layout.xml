@@ -1,5 +1,4 @@
-<LinearLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
@@ -37,9 +36,9 @@
             android:id="@+id/iconGrid"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:alignmentMode="alignMargins"
             android:columnCount="4"
-            android:useDefaultMargins="true"
-            android:alignmentMode="alignMargins" />
+            android:useDefaultMargins="true" />
 
     </ScrollView>
 
@@ -50,18 +49,37 @@
         android:gravity="end"
         android:orientation="horizontal">
 
-        <Button
+        <FrameLayout
             android:id="@+id/btnCancel"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_width="72dp"
+            android:layout_height="40dp"
+            android:layout_gravity="center_vertical"
             android:layout_marginEnd="8dp"
-            android:text="Cancel" />
+            android:background="@drawable/bg_button_ripple">
 
-        <Button
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:gravity="center"
+                android:text="Cancel"
+                android:textStyle="bold" />
+        </FrameLayout>
+
+        <FrameLayout
             android:id="@+id/btnSave"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Save" />
+            android:layout_width="72dp"
+            android:layout_height="40dp"
+            android:layout_gravity="center_vertical"
+            android:layout_marginEnd="8dp"
+            android:background="@drawable/bg_button_ripple">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:gravity="center"
+                android:text="Save"
+                android:textStyle="bold" />
+        </FrameLayout>
 
     </LinearLayout>
 

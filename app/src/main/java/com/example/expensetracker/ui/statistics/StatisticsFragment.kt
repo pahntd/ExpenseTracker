@@ -11,6 +11,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.expensetracker.R
+import com.example.expensetracker.data.local.converter.TransactionType
 import com.example.expensetracker.databinding.FragmentStatisticsBinding
 import com.example.expensetracker.utils.toCurrency
 import dagger.hilt.android.AndroidEntryPoint
@@ -48,8 +49,8 @@ class StatisticsFragment : Fragment() {
     }
 
     private fun setupRecyclerView() {
-        expenseAdapter = CategoryStatisticsAdapter()
-        incomeAdapter = CategoryStatisticsAdapter()
+        expenseAdapter = CategoryStatisticsAdapter(TransactionType.EXPENSE)
+        incomeAdapter = CategoryStatisticsAdapter(TransactionType.INCOME)
 
         binding.rvExpenseByCategory.apply {
             layoutManager = LinearLayoutManager(requireContext())

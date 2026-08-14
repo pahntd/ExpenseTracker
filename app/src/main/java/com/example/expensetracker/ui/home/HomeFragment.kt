@@ -2,7 +2,6 @@ package com.example.expensetracker.ui.home
 
 import android.annotation.SuppressLint
 import android.os.Bundle
-import android.util.Log
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
@@ -18,8 +17,6 @@ import com.example.expensetracker.databinding.FragmentHomeBinding
 import com.example.expensetracker.utils.toCurrency
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
-import java.text.NumberFormat
-import java.util.Locale
 
 @AndroidEntryPoint
 class HomeFragment : Fragment() {

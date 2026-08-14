@@ -1,10 +1,12 @@
 package com.example.expensetracker.ui.statistics
 
+import android.graphics.Color
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
+import com.example.expensetracker.data.local.converter.TransactionType
 import com.example.expensetracker.utils.IconMapper
 import com.example.expensetracker.data.local.relation.CategoryWithAmountSummary
 import com.example.expensetracker.databinding.ItemStatisticsBinding
@@ -12,7 +14,9 @@ import com.example.expensetracker.utils.toCurrency
 import java.text.NumberFormat
 import java.util.Locale
 
-class CategoryStatisticsAdapter :
+class CategoryStatisticsAdapter(
+    private val type: TransactionType
+) :
     ListAdapter<CategoryWithAmountSummary, CategoryStatisticsAdapter.CategoryWithSumViewHolder>(
         DiffCallback
     ) {
@@ -39,6 +43,7 @@ class CategoryStatisticsAdapter :
                 tvCategoryName.text = item.categoryName
                 ivIcon.setImageResource(IconMapper.getDrawable(item.icon))
                 tvAmount.text = item.totalAmount.toCurrency()
+                tvAmount.setTextColor(if (type == TransactionType.EXPENSE) Color.RED else Color.GREEN)
             }
         }
     }

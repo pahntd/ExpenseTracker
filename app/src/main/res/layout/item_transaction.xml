@@ -42,7 +42,8 @@
             app:layout_constraintEnd_toStartOf="@id/tvAmount"
             app:layout_constraintStart_toEndOf="@id/imgCategory"
             app:layout_constraintTop_toTopOf="@id/imgCategory"
-            tools:text="Coffee" />
+            tools:text="Coffee"
+            android:maxLines="1"/>
 
         <!-- Category -->
 
@@ -56,7 +57,8 @@
             app:layout_constraintEnd_toStartOf="@id/tvAmount"
             app:layout_constraintStart_toStartOf="@id/tvNote"
             app:layout_constraintTop_toBottomOf="@id/tvNote"
-            tools:text="Food &amp; Drink" />
+            tools:text="Food &amp; Drink"
+            android:maxLines="1"/>
 
         <!-- Amount -->
 
