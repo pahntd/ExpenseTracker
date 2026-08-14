@@ -1,7 +1,6 @@
 package com.example.expensetracker
 
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.isVisible
@@ -41,6 +40,9 @@ class MainActivity : AppCompatActivity() {
         binding.bottomNavigation.setOnItemSelectedListener { item ->
             if (navController.currentDestination?.id == item.itemId) {
                 return@setOnItemSelectedListener true
+            }
+            while (navController.popBackStack()) {
+                // Clear navigation back stack
             }
             navController.navigate(item.itemId)
             true

@@ -2,7 +2,6 @@
 
 <navigation xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/root_nav_graph"
     app:startDestination="@id/splashFragment">
 
@@ -12,74 +11,82 @@
         android:label="Splash">
 
         <action
-            android:id="@+id/action_splashFragment_to_mainGraph"
-            app:destination="@id/mainGraph"
+            android:id="@+id/action_splashFragment_to_homeFragment"
+            app:destination="@id/homeFragment"
             app:popUpTo="@id/splashFragment"
-            app:popUpToInclusive="true" />
+            app:popUpToInclusive="true"
+            app:enterAnim="@anim/fade_in"
+            app:exitAnim="@anim/fade_out" />
 
     </fragment>
 
-    <navigation
-        android:id="@+id/mainGraph"
-        app:startDestination="@id/homeFragment">
+    <fragment
+        android:id="@+id/homeFragment"
+        android:name="com.example.expensetracker.ui.home.HomeFragment"
+        android:label="Home">
 
-        <fragment
-            android:id="@+id/homeFragment"
-            android:name="com.example.expensetracker.ui.home.HomeFragment"
-            android:label="Home">
+        <action
+            android:id="@+id/action_homeFragment_to_addExpenseFragment"
+            app:destination="@id/addExpenseFragment"
+            app:enterAnim="@anim/slide_in_right"
+            app:exitAnim="@anim/slide_out_left"
+            app:popEnterAnim="@anim/slide_in_left"
+            app:popExitAnim="@anim/slide_out_right" />
 
-            <action
-                android:id="@+id/action_homeFragment_to_addExpenseFragment"
-                app:destination="@id/addExpenseFragment" />
+        <action
+            android:id="@+id/action_homeFragment_to_expenseDetailFragment"
+            app:destination="@id/expenseDetailFragment"
+            app:enterAnim="@anim/slide_in_right"
+            app:exitAnim="@anim/slide_out_left"
+            app:popEnterAnim="@anim/slide_in_left"
+            app:popExitAnim="@anim/slide_out_right" />
 
-            <action
-                android:id="@+id/action_homeFragment_to_expenseDetailFragment"
-                app:destination="@id/expenseDetailFragment" />
+    </fragment>
 
-        </fragment>
+    <fragment
+        android:id="@+id/categoryFragment"
+        android:name="com.example.expensetracker.ui.category.CategoryFragment"
+        android:label="Category" />
 
-        <fragment
-            android:id="@+id/categoryFragment"
-            android:name="com.example.expensetracker.ui.category.CategoryFragment"
-            android:label="Category" />
+    <fragment
+        android:id="@+id/statisticsFragment"
+        android:name="com.example.expensetracker.ui.statistics.StatisticsFragment"
+        android:label="Statistics" />
 
-        <!-- Màn hình phụ -->
+    <fragment
+        android:id="@+id/settingsFragment"
+        android:name="com.example.expensetracker.ui.setting.SettingFragment"
+        android:label="Settings" />
 
-        <fragment
-            android:id="@+id/addExpenseFragment"
-            android:name="com.example.expensetracker.ui.add.AddExpenseFragment"
-            android:label="AddExpenseFragment">
+    <fragment
+        android:id="@+id/addExpenseFragment"
+        android:name="com.example.expensetracker.ui.add.AddExpenseFragment"
+        android:label="Add Expense">
 
-            <argument
-                android:name="expenseId"
-                android:defaultValue="-1L"
-                app:argType="long" />
+        <argument
+            android:name="expenseId"
+            android:defaultValue="-1L"
+            app:argType="long" />
 
-        </fragment>
+    </fragment>
 
-        <fragment
-            android:id="@+id/expenseDetailFragment"
-            android:name="com.example.expensetracker.ui.detail.ExpenseDetailFragment"
-            android:label="ExpenseDetailFragment">
+    <fragment
+        android:id="@+id/expenseDetailFragment"
+        android:name="com.example.expensetracker.ui.detail.ExpenseDetailFragment"
+        android:label="Expense Detail">
 
-            <argument
-                android:name="expenseId"
-                app:argType="long" />
+        <argument
+            android:name="expenseId"
+            app:argType="long" />
 
-            <action
-                android:id="@+id/action_expenseDetailFragment_to_addExpenseFragment"
-                app:destination="@id/addExpenseFragment" />
+        <action
+            android:id="@+id/action_expenseDetailFragment_to_addExpenseFragment"
+            app:destination="@id/addExpenseFragment"
+            app:enterAnim="@anim/slide_in_right"
+            app:exitAnim="@anim/slide_out_left"
+            app:popEnterAnim="@anim/slide_in_left"
+            app:popExitAnim="@anim/slide_out_right" />
 
-        </fragment>
-        <fragment
-            android:id="@+id/settingsFragment"
-            android:name="com.example.expensetracker.ui.setting.SettingFragment"
-            android:label="SettingFragment" />
-        <fragment
-            android:id="@+id/statisticsFragment"
-            android:name="com.example.expensetracker.ui.statistics.StatisticsFragment"
-            android:label="fragment_statistics" />
-
-    </navigation>
+    </fragment>
 
 </navigation>

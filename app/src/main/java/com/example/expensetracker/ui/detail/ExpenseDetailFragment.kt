@@ -44,6 +44,7 @@ class ExpenseDetailFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        binding.toolbar.title = "Transaction Detail"
         observeState()
         setupClick()
     }
@@ -101,6 +102,9 @@ class ExpenseDetailFragment : Fragment() {
         }
         binding.btnDelete.setOnClickListener {
             showDeleteDialog()
+        }
+        binding.toolbar.setNavigationOnClickListener {
+            findNavController().popBackStack()
         }
     }
 

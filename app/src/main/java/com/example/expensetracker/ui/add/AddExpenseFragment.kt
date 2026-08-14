@@ -133,6 +133,9 @@ class AddExpenseFragment : Fragment() {
         binding.btnSave.setOnClickListener {
             addExpenseViewModel.save()
         }
+        binding.toolbar.setNavigationOnClickListener {
+            findNavController().popBackStack()
+        }
     }
 
     private fun renderEditData(expense: ExpenseWithCategory) {

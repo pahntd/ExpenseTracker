@@ -48,7 +48,7 @@ class SplashFragment : Fragment() {
         viewLifecycleOwner.lifecycleScope.launch {
             delay(1000)
             findNavController().navigate(
-                SplashFragmentDirections.actionSplashFragmentToMainGraph()
+                SplashFragmentDirections.actionSplashFragmentToHomeFragment()
             )
         }
     }
