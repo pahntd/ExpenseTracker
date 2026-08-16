@@ -23,6 +23,7 @@
         android:layout_margin="20dp"
         android:contentDescription="Add category"
         android:src="@android:drawable/ic_input_add"
+        android:backgroundTint="@color/bg_fb_add_category"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 

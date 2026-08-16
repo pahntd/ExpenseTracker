@@ -21,7 +21,8 @@
             android:scaleType="centerInside"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+            app:layout_constraintTop_toTopOf="parent"
+            app:tint = "@color/black"/>
 
         <TextView
             android:id="@+id/tvName"
@@ -35,7 +36,8 @@
             app:layout_constraintEnd_toStartOf="@id/guideline"
             app:layout_constraintStart_toEndOf="@id/ivIcon"
             app:layout_constraintTop_toTopOf="parent"
-            android:maxLines="1"/>
+            android:maxLines="1"
+            android:textColor="@color/black"/>
 
         <TextView
             android:id="@+id/tvExpenseCount"
@@ -48,7 +50,8 @@
             app:layout_constraintEnd_toStartOf="@id/btnEditCate"
             app:layout_constraintStart_toEndOf="@+id/tvName"
             app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintVertical_bias="0.448" />
+            app:layout_constraintVertical_bias="0.448"
+            android:textColor="@color/black"/>
 
         <FrameLayout
             android:id="@+id/btnEditCate"

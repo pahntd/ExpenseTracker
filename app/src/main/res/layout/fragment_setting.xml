@@ -3,6 +3,7 @@
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:padding="20dp">
 
     <LinearLayout
@@ -43,11 +44,12 @@
                 android:text="Dark Mode"
                 android:textSize="16sp" />
 
-            <Switch
+            <com.google.android.material.materialswitch.MaterialSwitch
                 android:id="@+id/switchDarkMode"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:background="@drawable/bg_button_ripple"/>
+                android:layout_height="16dp"
+                app:thumbTint="@drawable/switch_thumb"
+                app:trackTint="@drawable/switch_track"/>
 
         </LinearLayout>
 

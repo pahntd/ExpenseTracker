@@ -8,4 +8,11 @@
     <color name="green">#4CAF50</color>
     <color name="bottom_bar_background">#C9F8FF</color>
     <color name="bottom_bar_icon_active_indicator_color">#23D0C8</color>
+    <color name="bg_fb_add_category">#009688</color>
+    <color name="blur_text_color">#949494</color>
+
+    <color name="switch_thumb_on">#FFFFFF</color>
+    <color name="switch_thumb_off">#757575</color>
+    <color name="switch_track_on">#009688</color>
+    <color name="switch_track_off">#E0E0E0</color>
 </resources>

@@ -14,7 +14,7 @@ import android.widget.ImageView
 import androidx.appcompat.widget.SearchView
 import androidx.core.animation.doOnEnd
 import androidx.core.animation.doOnStart
-import androidx.core.content.ContextCompat.getSystemService
+import androidx.core.content.ContextCompat
 import androidx.core.content.getSystemService
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
@@ -22,6 +22,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.example.expensetracker.R
 import com.example.expensetracker.databinding.FragmentHomeBinding
 import com.example.expensetracker.utils.dp
 import com.example.expensetracker.utils.toCurrency
@@ -49,7 +50,7 @@ class HomeFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         setupRecyclerView()
-        setupSearchViewAnimation(requireContext())
+        setupSearchView(requireContext())
         observeUi()
         setupListener()
     }
@@ -80,13 +81,15 @@ class HomeFragment : Fragment() {
         }
     }
 
-    private fun setupSearchViewAnimation(context: Context) {
+    private fun setupSearchView(context: Context) {
         val container = binding.searchViewContainer
         val searchButton = binding.btnSearch
         val searchView = binding.searchView
 
         searchButton.visibility = View.VISIBLE
         searchView.visibility = View.GONE
+
+        setColorHintSearchView(R.color.blur_text_color)
 
         searchButton.setOnClickListener {
             val startWidth = container.width
@@ -107,9 +110,42 @@ class HomeFragment : Fragment() {
         }
     }
 
+    private fun setColorHintSearchView(idColor: Int) {
+        val searchView = binding.searchView
+        val searchEditText =
+            searchView.findViewById<AutoCompleteTextView>(
+                androidx.appcompat.R.id.search_src_text
+            )
+        val searchIcon =
+            binding.searchView.findViewById<ImageView>(
+                androidx.appcompat.R.id.search_mag_icon
+            )
+        val closeButton =
+            binding.searchView.findViewById<ImageView>(
+                androidx.appcompat.R.id.search_close_btn
+            )
+        searchEditText.setHintTextColor(
+            ContextCompat.getColor(requireContext(), idColor)
+        )
+        searchEditText.setTextColor(
+            ContextCompat.getColor(requireContext(), idColor)
+        )
+        searchIcon.imageTintList =
+            ContextCompat.getColorStateList(
+                requireContext(),
+                idColor
+            )
+        closeButton.imageTintList =
+            ContextCompat.getColorStateList(
+                requireContext(),
+                idColor
+            )
+    }
+
     private fun animationExpandSearch(startWidth: Int, endWidth: Int, context: Context) {
         val container = binding.searchViewContainer
         val searchView = binding.searchView
+        val btnSearch = binding.btnSearch
 
         ValueAnimator.ofInt(startWidth, endWidth).apply {
             duration = 150L
@@ -123,9 +159,9 @@ class HomeFragment : Fragment() {
             }
 
             doOnStart {
-                binding.btnSearch.visibility = View.GONE
-                binding.searchView.visibility = View.VISIBLE
-                binding.searchView.isIconified = false
+                btnSearch.visibility = View.GONE
+                searchView.visibility = View.VISIBLE
+                searchView.isIconified = false
             }
 
             doOnEnd {
@@ -164,10 +200,10 @@ class HomeFragment : Fragment() {
             }
 
             doOnStart {
-                binding.searchView.clearFocus()
+                searchView.clearFocus()
                 val imm = context.getSystemService<InputMethodManager>()
                 imm?.hideSoftInputFromWindow(
-                    binding.searchView.windowToken,
+                    searchView.windowToken,
                     0
                 )
             }

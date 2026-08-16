@@ -63,6 +63,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="8dp"
+                        android:textColor="@color/black"
                         android:textSize="30sp"
                         android:textStyle="bold"
                         tools:text="250.000 ₫" />
@@ -78,7 +79,6 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="24dp"
                 android:text="Category"
-                android:textColor="#666666"
                 android:textSize="14sp" />
 
             <TextView
@@ -97,7 +97,6 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="20dp"
                 android:text="Date"
-                android:textColor="#666666"
                 android:textSize="14sp" />
 
             <TextView
@@ -115,7 +114,6 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="20dp"
                 android:text="Title"
-                android:textColor="#666666"
                 android:textSize="14sp" />
 
             <TextView
@@ -174,6 +172,7 @@
                 android:layout_height="match_parent"
                 android:gravity="center"
                 android:text="Edit"
+                android:textColor="@color/black"
                 android:textSize="16sp"
                 android:textStyle="bold" />
         </FrameLayout>

@@ -62,7 +62,8 @@
                 android:layout_height="match_parent"
                 android:gravity="center"
                 android:text="Cancel"
-                android:textStyle="bold" />
+                android:textStyle="bold"
+                android:textColor="@color/black"/>
         </FrameLayout>
 
         <FrameLayout
@@ -78,7 +79,8 @@
                 android:layout_height="match_parent"
                 android:gravity="center"
                 android:text="Save"
-                android:textStyle="bold" />
+                android:textStyle="bold"
+                android:textColor="@color/black"/>
         </FrameLayout>
 
     </LinearLayout>
