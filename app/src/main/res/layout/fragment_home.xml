@@ -6,8 +6,6 @@
     android:layout_height="match_parent"
     android:background="#F5F5F5">
 
-    <!-- Header -->
-
     <TextView
         android:id="@+id/tvGreeting"
         android:layout_width="wrap_content"
@@ -19,8 +17,6 @@
         android:textSize="24sp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
-
-    <!-- Balance Card -->
 
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/cardBalance"
@@ -62,7 +58,6 @@
 
     </com.google.android.material.card.MaterialCardView>
 
-    <!-- Income / Expense -->
 
     <LinearLayout
         android:id="@+id/layoutOverview"
@@ -144,7 +139,6 @@
 
     </LinearLayout>
 
-    <!-- Recent -->
 
     <TextView
         android:id="@+id/tvListTrans"
@@ -158,19 +152,35 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/layoutOverview" />
 
-    <!-- RecyclerView -->
-
-    <!-- Floating Action Button -->
-    <androidx.appcompat.widget.SearchView
-        android:id="@+id/searchView"
-        android:layout_width="match_parent"
+    <RelativeLayout
+        android:id="@+id/searchViewContainer"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginHorizontal="20dp"
         android:layout_marginTop="12dp"
+        android:gravity="center"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/tvListTrans"
-        android:background="@drawable/bg_search_view"/>
+        app:layout_constraintTop_toBottomOf="@id/tvListTrans">
+
+        <ImageButton
+            android:id="@+id/btnSearch"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/bg_search_view"
+            android:src="@drawable/ic_search"
+            android:padding="12dp"
+            android:contentDescription="Search" />
+
+        <androidx.appcompat.widget.SearchView
+            android:id="@+id/searchView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@drawable/bg_search_view"
+            android:visibility="gone"
+            app:iconifiedByDefault="true"
+            app:queryHint="Search by category, name" />
+
+    </RelativeLayout>
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rvTransactions"
@@ -184,7 +194,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.9"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/searchView"
+        app:layout_constraintTop_toBottomOf="@id/searchViewContainer"
         app:layout_constraintVertical_bias="1.0"
         tools:listitem="@layout/item_transaction" />
 

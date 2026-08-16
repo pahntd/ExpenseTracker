@@ -1,12 +1,21 @@
 package com.example.expensetracker.ui.home
 
+import android.animation.ValueAnimator
 import android.annotation.SuppressLint
+import android.content.Context
 import android.os.Bundle
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.inputmethod.InputMethodManager
+import android.widget.AutoCompleteTextView
+import android.widget.ImageView
 import androidx.appcompat.widget.SearchView
+import androidx.core.animation.doOnEnd
+import androidx.core.animation.doOnStart
+import androidx.core.content.ContextCompat.getSystemService
+import androidx.core.content.getSystemService
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
@@ -14,6 +23,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.expensetracker.databinding.FragmentHomeBinding
+import com.example.expensetracker.utils.dp
 import com.example.expensetracker.utils.toCurrency
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
@@ -39,6 +49,7 @@ class HomeFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         setupRecyclerView()
+        setupSearchViewAnimation(requireContext())
         observeUi()
         setupListener()
     }
@@ -66,6 +77,113 @@ class HomeFragment : Fragment() {
                     adapter.submitList(state.transactions)
                 }
             }
+        }
+    }
+
+    private fun setupSearchViewAnimation(context: Context) {
+        val container = binding.searchViewContainer
+        val searchButton = binding.btnSearch
+        val searchView = binding.searchView
+
+        searchButton.visibility = View.VISIBLE
+        searchView.visibility = View.GONE
+
+        searchButton.setOnClickListener {
+            val startWidth = container.width
+            val endWidth = binding.root.width - 40.dp(context)
+            animationExpandSearch(startWidth, endWidth, context)
+        }
+
+        searchView.setOnCloseListener {
+            searchButton.measure(
+                View.MeasureSpec.UNSPECIFIED,
+                View.MeasureSpec.UNSPECIFIED
+            )
+
+            val startWidth = container.width
+            val endWidth = searchButton.measuredWidth
+            animationCollapseSearch(startWidth, endWidth, context)
+            false
+        }
+    }
+
+    private fun animationExpandSearch(startWidth: Int, endWidth: Int, context: Context) {
+        val container = binding.searchViewContainer
+        val searchView = binding.searchView
+
+        ValueAnimator.ofInt(startWidth, endWidth).apply {
+            duration = 150L
+            addUpdateListener { animator ->
+                val width = animator.animatedValue as Int
+                container.layoutParams =
+                    container.layoutParams.apply {
+                        this.width = width
+                    }
+                container.requestLayout()
+            }
+
+            doOnStart {
+                binding.btnSearch.visibility = View.GONE
+                binding.searchView.visibility = View.VISIBLE
+                binding.searchView.isIconified = false
+            }
+
+            doOnEnd {
+                val searchEditText =
+                    searchView.findViewById<AutoCompleteTextView>(
+                        androidx.appcompat.R.id.search_src_text
+                    )
+                searchEditText.requestFocus()
+                searchEditText.post {
+                    val imm =
+                        context.getSystemService<InputMethodManager>()
+                    imm?.showSoftInput(
+                        searchEditText,
+                        InputMethodManager.SHOW_IMPLICIT
+                    )
+                }
+            }
+            start()
+        }
+    }
+
+    private fun animationCollapseSearch(startWidth: Int, endWidth: Int, context: Context) {
+        val container = binding.searchViewContainer
+        val searchView = binding.searchView
+        val btnSearch = binding.btnSearch
+        ValueAnimator.ofInt(startWidth, endWidth).apply {
+            duration = 150L
+            addUpdateListener { animator ->
+                val width =
+                    animator.animatedValue as Int
+                container.layoutParams =
+                    container.layoutParams.apply {
+                        this.width = width
+                    }
+                container.requestLayout()
+            }
+
+            doOnStart {
+                binding.searchView.clearFocus()
+                val imm = context.getSystemService<InputMethodManager>()
+                imm?.hideSoftInputFromWindow(
+                    binding.searchView.windowToken,
+                    0
+                )
+            }
+
+            doOnEnd {
+                searchView.visibility = View.GONE
+                btnSearch.visibility = View.VISIBLE
+
+                container.layoutParams =
+                    container.layoutParams.apply {
+                        width = ViewGroup.LayoutParams.WRAP_CONTENT
+                    }
+
+                container.requestLayout()
+            }
+            start()
         }
     }
 
