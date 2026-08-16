@@ -29,7 +29,7 @@ class TransactionAdapter(
                 tvCategory.text = item.category.name
                 tvDate.text = formatDate(item.expense.date)
                 imgCategory.setImageResource(IconMapper.getDrawable(item.category.icon))
-                binding.tvNote.text = item.expense.note
+                binding.tvTitle.text = item.expense.title
                 formatAmount(item, tvAmount)
             }
             binding.root.setOnClickListener {

@@ -1,6 +1,5 @@
 package com.example.expensetracker.ui.detail
 
-import android.content.DialogInterface
 import android.os.Bundle
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
@@ -18,7 +17,6 @@ import com.example.expensetracker.databinding.FragmentExpenseDetailBinding
 import com.example.expensetracker.utils.toCurrency
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
-import java.text.NumberFormat
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -66,8 +64,8 @@ class ExpenseDetailFragment : Fragment() {
                                 ).format(
                                     Date(expenseWithCategory.expense.date)
                                 )
-                            binding.tvNote.text =
-                                expenseWithCategory.expense.note ?: "No note"
+                            binding.tvTitle.text =
+                                expenseWithCategory.expense.title ?: "No note"
                         }
                     }
                 }

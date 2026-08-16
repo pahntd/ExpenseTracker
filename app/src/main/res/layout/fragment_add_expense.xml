@@ -11,8 +11,6 @@
         android:orientation="vertical"
         android:padding="20dp">
 
-        <!-- Toolbar -->
-
         <com.google.android.material.appbar.MaterialToolbar
             android:id="@+id/toolbar"
             android:layout_width="match_parent"
@@ -21,7 +19,6 @@
             app:navigationIcon="@drawable/ic_arrow_back"
             app:title="Add Expense" />
 
-        <!-- Amount -->
 
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/tilAmount"
@@ -38,7 +35,22 @@
 
         </com.google.android.material.textfield.TextInputLayout>
 
-        <!-- Type -->
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/tilTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:hint="Title">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etTitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="top|start"
+                android:inputType="textMultiLine"
+                android:maxLines="1" />
+
+        </com.google.android.material.textfield.TextInputLayout>
 
         <TextView
             android:layout_width="wrap_content"
@@ -68,8 +80,6 @@
 
         </RadioGroup>
 
-        <!-- Category -->
-
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/tilCategory"
             style="@style/Widget.Material3.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
@@ -86,15 +96,13 @@
 
         </com.google.android.material.textfield.TextInputLayout>
 
-        <!-- Date -->
-
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/tilDate"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="20dp"
             android:hint="Date"
-            app:endIconDrawable="@android:drawable/ic_menu_my_calendar"
+            app:endIconDrawable="@drawable/ic_calendar"
             app:endIconMode="custom">
 
             <com.google.android.material.textfield.TextInputEditText
@@ -105,27 +113,6 @@
                 android:focusable="false" />
 
         </com.google.android.material.textfield.TextInputLayout>
-
-        <!-- Note -->
-
-        <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/tilNote"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="20dp"
-            android:hint="Note">
-
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/etNote"
-                android:layout_width="match_parent"
-                android:layout_height="80dp"
-                android:gravity="top|start"
-                android:inputType="textMultiLine"
-                android:maxLines="4" />
-
-        </com.google.android.material.textfield.TextInputLayout>
-
-        <!-- Save -->
 
         <FrameLayout
             android:id="@+id/btnSave"

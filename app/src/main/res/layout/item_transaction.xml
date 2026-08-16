@@ -32,7 +32,7 @@
         <!-- Title -->
 
         <TextView
-            android:id="@+id/tvNote"
+            android:id="@+id/tvTitle"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="12dp"
@@ -55,8 +55,8 @@
             android:textColor="#757575"
             android:textSize="13sp"
             app:layout_constraintEnd_toStartOf="@id/tvAmount"
-            app:layout_constraintStart_toStartOf="@id/tvNote"
-            app:layout_constraintTop_toBottomOf="@id/tvNote"
+            app:layout_constraintStart_toStartOf="@id/tvTitle"
+            app:layout_constraintTop_toBottomOf="@id/tvTitle"
             tools:text="Food &amp; Drink"
             android:maxLines="1"/>
 
@@ -70,7 +70,7 @@
             android:textSize="16sp"
             android:textStyle="bold"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="@id/tvNote"
+            app:layout_constraintTop_toTopOf="@id/tvTitle"
             tools:text="-120,000 ₫" />
 
         <!-- Date -->

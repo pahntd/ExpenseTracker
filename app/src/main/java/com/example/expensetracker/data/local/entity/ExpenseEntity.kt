@@ -26,5 +26,5 @@ data class ExpenseEntity(
     val type: TransactionType,
     val categoryId: Long,
     val date: Long,
-    val note: String?
+    val title: String?
 )

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <style name="BottomNavigationActiveIndicator">
+        <item name="android:color">@color/bottom_bar_icon_active_indicator_color</item>
+        <item name="android:width">64dp</item>
+        <item name="android:height">32dp</item>
+        <item name="shapeAppearance">
+            @style/BottomNavigationActiveIndicatorShape
+        </item>
+    </style>
+
+    <style name="BottomNavigationActiveIndicatorShape">
+        <item name="cornerSize">50%</item>
+    </style>
+</resources>

@@ -178,7 +178,7 @@
             android:background="@drawable/bg_search_view"
             android:visibility="gone"
             app:iconifiedByDefault="true"
-            app:queryHint="Search by category, name" />
+            app:queryHint="Search by category, title" />
 
     </RelativeLayout>
 

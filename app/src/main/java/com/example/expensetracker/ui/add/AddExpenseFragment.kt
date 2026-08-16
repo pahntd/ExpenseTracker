@@ -23,10 +23,6 @@ import com.example.expensetracker.utils.toCurrency
 import com.example.expensetracker.utils.toDateString
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
-import java.text.NumberFormat
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
 
 @AndroidEntryPoint
 class AddExpenseFragment : Fragment() {
@@ -118,7 +114,7 @@ class AddExpenseFragment : Fragment() {
         binding.etAmount.doAfterTextChanged {
             addExpenseViewModel.updateAmount(it.toString())
         }
-        binding.etNote.doAfterTextChanged {
+        binding.etTitle.doAfterTextChanged {
             addExpenseViewModel.updateNote(it.toString())
         }
         binding.rgType.setOnCheckedChangeListener { _, checkId ->
@@ -141,7 +137,7 @@ class AddExpenseFragment : Fragment() {
     private fun renderEditData(expense: ExpenseWithCategory) {
         binding.etAmount.setText(expense.expense.amount.toCurrency())
 
-        binding.etNote.setText(expense.expense.note)
+        binding.etTitle.setText(expense.expense.title)
 
         binding.etDate.setText(
             expense.expense.date.toDateString()

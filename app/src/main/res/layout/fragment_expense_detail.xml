@@ -114,12 +114,12 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="20dp"
-                android:text="Note"
+                android:text="Title"
                 android:textColor="#666666"
                 android:textSize="14sp" />
 
             <TextView
-                android:id="@+id/tvNote"
+                android:id="@+id/tvTitle"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="6dp"

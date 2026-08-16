@@ -60,7 +60,7 @@ class AddExpenseViewModel @Inject constructor(
                     type = expenseWithCategory.expense.type,
                     selectedCategory = expenseWithCategory.category,
                     date = expenseWithCategory.expense.date,
-                    note = expenseWithCategory.expense.note.orEmpty()
+                    note = expenseWithCategory.expense.title.orEmpty()
                 )
             }
             _eventState.emit(
@@ -141,7 +141,7 @@ class AddExpenseViewModel @Inject constructor(
 
                 date = state.date,
 
-                note = state.note
+                title = state.note
             )
             if (isEditMode) {
                 expenseRepository.updateExpense(expense.copy(id = expenseId))

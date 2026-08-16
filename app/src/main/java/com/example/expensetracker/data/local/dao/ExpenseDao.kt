@@ -53,7 +53,7 @@ interface ExpenseDao {
         ON expenses.categoryId = categories.id
         WHERE
         categories.name LIKE '%' || :keyword || '%'
-        OR expenses.note LIKE '%'||:keyword||'%'
+        OR expenses.title LIKE '%'||:keyword||'%'
         ORDER BY expenses.date DESC
     """
     )
