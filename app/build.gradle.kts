@@ -8,11 +8,11 @@ plugins {
 }
 
 android {
-    namespace = "com.example.expensetracker"
+    namespace = "com.pahntd.expensetracker"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.example.expensetracker"
+        applicationId = "com.pahntd.expensetracker"
         minSdk = 29
         targetSdk = 35
         versionCode = 1

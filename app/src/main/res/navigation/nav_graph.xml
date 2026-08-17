@@ -7,7 +7,7 @@
 
     <fragment
         android:id="@+id/splashFragment"
-        android:name="com.example.expensetracker.ui.splash.SplashFragment"
+        android:name="com.pahntd.expensetracker.ui.splash.SplashFragment"
         android:label="Splash">
 
         <action
@@ -22,7 +22,7 @@
 
     <fragment
         android:id="@+id/homeFragment"
-        android:name="com.example.expensetracker.ui.home.HomeFragment"
+        android:name="com.pahntd.expensetracker.ui.home.HomeFragment"
         android:label="Home">
 
         <action
@@ -45,22 +45,22 @@
 
     <fragment
         android:id="@+id/categoryFragment"
-        android:name="com.example.expensetracker.ui.category.CategoryFragment"
+        android:name="com.pahntd.expensetracker.ui.category.CategoryFragment"
         android:label="Category" />
 
     <fragment
         android:id="@+id/statisticsFragment"
-        android:name="com.example.expensetracker.ui.statistics.StatisticsFragment"
+        android:name="com.pahntd.expensetracker.ui.statistics.StatisticsFragment"
         android:label="Statistics" />
 
     <fragment
         android:id="@+id/settingsFragment"
-        android:name="com.example.expensetracker.ui.setting.SettingFragment"
+        android:name="com.pahntd.expensetracker.ui.setting.SettingFragment"
         android:label="Settings" />
 
     <fragment
         android:id="@+id/addExpenseFragment"
-        android:name="com.example.expensetracker.ui.add.AddExpenseFragment"
+        android:name="com.pahntd.expensetracker.ui.add.AddExpenseFragment"
         android:label="Add Expense">
 
         <argument
@@ -72,7 +72,7 @@
 
     <fragment
         android:id="@+id/expenseDetailFragment"
-        android:name="com.example.expensetracker.ui.detail.ExpenseDetailFragment"
+        android:name="com.pahntd.expensetracker.ui.detail.ExpenseDetailFragment"
         android:label="Expense Detail">
 
         <argument

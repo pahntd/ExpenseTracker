@@ -1,0 +1,68 @@
+package com.pahntd.expensetracker.ui.category
+
+import android.annotation.SuppressLint
+import android.view.LayoutInflater
+import android.view.ViewGroup
+import androidx.recyclerview.widget.DiffUtil
+import androidx.recyclerview.widget.ListAdapter
+import androidx.recyclerview.widget.RecyclerView
+import com.pahntd.expensetracker.utils.IconMapper
+import com.pahntd.expensetracker.data.local.relation.CategoryWithExpenseCount
+import com.pahntd.expensetracker.databinding.ItemCategoryBinding
+
+class CategoryRecyclerViewAdapter(
+    private val onClickEdit: (CategoryWithExpenseCount) -> Unit,
+    private val onClickDelete: (CategoryWithExpenseCount) -> Unit
+) :
+    ListAdapter<CategoryWithExpenseCount, CategoryRecyclerViewAdapter.CategoryViewHolder>(
+        DiffCallback
+    ) {
+
+    inner class CategoryViewHolder(
+        private val binding: ItemCategoryBinding
+    ) : RecyclerView.ViewHolder(binding.root) {
+        @SuppressLint("SetTextI18n")
+        fun bind(item: CategoryWithExpenseCount) {
+            binding.apply {
+                ivIcon.setImageResource(IconMapper.getDrawable(item.icon))
+                tvName.text = item.name
+                tvExpenseCount.text = item.expenseCount.toString()
+            }
+            binding.btnEditCate.setOnClickListener {
+                onClickEdit(item)
+            }
+            binding.btnDeleteCate.setOnClickListener {
+                onClickDelete(item)
+            }
+        }
+    }
+
+    companion object {
+        private val DiffCallback = object : DiffUtil.ItemCallback<CategoryWithExpenseCount>() {
+            override fun areItemsTheSame(
+                oldItem: CategoryWithExpenseCount,
+                newItem: CategoryWithExpenseCount
+            ): Boolean {
+                return oldItem.categoryId == newItem.categoryId
+            }
+
+            override fun areContentsTheSame(
+                oldItem: CategoryWithExpenseCount,
+                newItem: CategoryWithExpenseCount
+            ): Boolean {
+                return oldItem == newItem
+            }
+
+        }
+    }
+
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): CategoryViewHolder {
+        val binding =
+            ItemCategoryBinding.inflate(LayoutInflater.from(parent.context), parent, false)
+        return CategoryViewHolder(binding)
+    }
+
+    override fun onBindViewHolder(holder: CategoryViewHolder, position: Int) {
+        holder.bind(getItem(position))
+    }
+}
