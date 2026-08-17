@@ -1,4 +1,4 @@
-package com.pahntd.expensetracker.ui.setting
+package com.pahntd.expensetracker.data.repository
 
 import com.pahntd.expensetracker.data.local.database.ExpenseDatabase
 import javax.inject.Inject

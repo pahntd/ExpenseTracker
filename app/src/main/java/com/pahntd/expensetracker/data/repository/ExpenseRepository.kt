@@ -1,4 +1,4 @@
-package com.pahntd.expensetracker.repository
+package com.pahntd.expensetracker.data.repository
 
 import com.pahntd.expensetracker.data.local.converter.TransactionType
 import com.pahntd.expensetracker.data.local.dao.ExpenseDao

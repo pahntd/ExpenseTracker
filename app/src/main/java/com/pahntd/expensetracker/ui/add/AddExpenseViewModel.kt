@@ -6,8 +6,8 @@ import androidx.lifecycle.viewModelScope
 import com.pahntd.expensetracker.data.local.converter.TransactionType
 import com.pahntd.expensetracker.data.local.entity.CategoryEntity
 import com.pahntd.expensetracker.data.local.entity.ExpenseEntity
-import com.pahntd.expensetracker.repository.CategoryRepository
-import com.pahntd.expensetracker.repository.ExpenseRepository
+import com.pahntd.expensetracker.data.repository.CategoryRepository
+import com.pahntd.expensetracker.data.repository.ExpenseRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow

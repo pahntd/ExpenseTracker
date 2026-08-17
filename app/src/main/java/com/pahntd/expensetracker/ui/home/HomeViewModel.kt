@@ -3,7 +3,7 @@ package com.pahntd.expensetracker.ui.home
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.pahntd.expensetracker.data.local.converter.TransactionType
-import com.pahntd.expensetracker.repository.ExpenseRepository
+import com.pahntd.expensetracker.data.repository.ExpenseRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
