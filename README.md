@@ -5,18 +5,26 @@ An Android expense tracking application built with Kotlin and modern Android dev
 Expense Tracker allows users to manage income and expenses, organize transactions by category, view financial summaries, and manage application settings.
 
 ## Screenshots
-
+#### Home
 <p align="center">
-  <img src="screenshots/home.png" width="200"/>
-  <img src="screenshots/add_expense.png" width="200"/>
-  <img src="screenshots/category.png" width="200"/>
-  <img src="screenshots/statistics.png" width="200"/>
+  <img src="screenshots/home.jpg" width="200"/>
+  <img src="screenshots/add_expense.jpg" width="200"/>
+  <img src="screenshots/detail.jpg" width="200"/>
+  <img src="screenshots/search.jpg" width="200"/>
 </p>
 
+#### Category
 <p align="center">
-  <img src="screenshots/detail.png" width="200"/>
-  <img src="screenshots/settings.png" width="200"/>
-  <img src="screenshots/dark_mode.png" width="200"/>
+  <img src="screenshots/category.jpg" width="200"/>
+  <img src="screenshots/add_category.jpg" width="200"/>
+
+</p>
+
+#### Statistics, Settings and Dark mode
+<p align="center">
+  <img src="screenshots/statistics.jpg" width="200"/>
+  <img src="screenshots/settings.jpg" width="200"/>
+  <img src="screenshots/dark.jpg" width="200"/>
 </p>
 
 ## Features
