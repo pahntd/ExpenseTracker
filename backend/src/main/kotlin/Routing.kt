@@ -2,9 +2,11 @@ package com.pahntd.expensetracker
 
 import com.pahntd.expensetracker.api.EchoRequest
 import com.pahntd.expensetracker.api.EchoResponse
+import com.pahntd.expensetracker.api.ErrorResponse
 import com.pahntd.expensetracker.api.HealthResponse
 import com.pahntd.expensetracker.api.LoginRequest
 import com.pahntd.expensetracker.api.LoginResponse
+import com.pahntd.expensetracker.api.LogoutRequest
 import com.pahntd.expensetracker.api.RefreshTokenRequest
 import com.pahntd.expensetracker.api.RefreshTokenResponse
 import com.pahntd.expensetracker.api.RegisterRequest
@@ -202,5 +204,44 @@ fun Application.configureRouting() {
             )
         }
 
+        post("/auth/logout"){
+            val request = call.receive<LogoutRequest>()
+            val refreshTokenRepository = ExposedRefreshTokenRepository()
+            val refreshToken = refreshTokenRepository.findByToken(
+                request.refreshToken
+            )
+
+            if (refreshToken == null) {
+                call.respond(
+                    HttpStatusCode.Unauthorized,
+                    ErrorResponse("Invalid refresh token")
+                )
+                return@post
+            }
+
+            if (refreshToken.revokedAt != null) {
+                call.respond(
+                    HttpStatusCode.Unauthorized,
+                    ErrorResponse("Refresh token has already been revoked")
+                )
+                return@post
+            }
+            if (refreshToken.expiresAt.isBefore(now(ZoneOffset.UTC)
+                )
+            ) {
+                call.respond(
+                    HttpStatusCode.Unauthorized,
+                    "Refresh token has expired"
+                )
+                return@post
+            }
+            refreshTokenRepository.revoke(
+                request.refreshToken
+            )
+
+            call.respond(
+                HttpStatusCode.NoContent
+            )
+        }
     }
 }

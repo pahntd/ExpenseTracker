@@ -6,7 +6,9 @@ import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
+import org.jetbrains.exposed.v1.jdbc.update
 import java.time.OffsetDateTime
+import java.time.ZoneOffset
 
 class ExposedRefreshTokenRepository : RefreshTokenRepository {
 
@@ -53,7 +55,13 @@ class ExposedRefreshTokenRepository : RefreshTokenRepository {
 
     override fun revoke(token: String) {
         transaction {
-            // Sẽ implement ở bước logout/token rotation
+            RefreshTokenTable.update(
+                where = {
+                    RefreshTokenTable.token eq token
+                }
+            ) {
+                it[revokedAt] = OffsetDateTime.now(ZoneOffset.UTC)
+            }
         }
     }
 }
