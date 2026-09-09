@@ -35,6 +35,8 @@ dependencies {
     implementation("io.ktor:ktor-server-auth-jwt-jvm:3.5.2")
     implementation("com.auth0:java-jwt:4.5.0")
 
+    implementation("io.ktor:ktor-server-status-pages")
+
     implementation(libs.jbcrypt)
 
     implementation("org.jetbrains.exposed:exposed-java-time:1.5.0")

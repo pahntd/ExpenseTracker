@@ -18,6 +18,16 @@ class AuthService(
         email: String,
         password: String
     ): User {
+        if (!isValidEmail(email)) {
+            throw IllegalArgumentException("Invalid email format")
+        }
+
+        if (!isValidPassword(password)) {
+            throw IllegalArgumentException(
+                "Password must be at least 6 characters"
+            )
+        }
+
         val existingUser = userRepository.findByEmail(email)
 
         if (existingUser != null) {
@@ -37,6 +47,16 @@ class AuthService(
         )
 
         return userRepository.create(user)
+    }
+
+    private fun isValidEmail(email: String): Boolean {
+        return email.matches(
+            Regex("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$")
+        )
+    }
+
+    private fun isValidPassword(password: String): Boolean {
+        return password.length >= 6
     }
 
     fun login(
