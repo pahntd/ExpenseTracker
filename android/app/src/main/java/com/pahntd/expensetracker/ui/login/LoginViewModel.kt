@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.pahntd.expensetracker.data.auth.AuthRepository
 import com.pahntd.expensetracker.data.auth.LoginResult
+import com.pahntd.expensetracker.data.auth.session.SessionManager
 import com.pahntd.expensetracker.utils.AuthValidator
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -12,11 +13,13 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.util.concurrent.CancellationException
 import javax.inject.Inject
 
 @HiltViewModel
 class LoginViewModel @Inject constructor(
-    private val authRepository: AuthRepository
+    private val authRepository: AuthRepository,
+    private val sessionManager: SessionManager
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(LoginUiState())
@@ -70,8 +73,22 @@ class LoginViewModel @Inject constructor(
                     password = current.password
                 )
                 when (result) {
-                    is LoginResult.Success ->
-                        _eventState.emit(LoginEvent.Success(result.response))
+                    is LoginResult.Success -> {
+                        val response = result.response
+                        try {
+                            // Persist the session first; only report success once it is stored.
+                            sessionManager.saveSession(
+                                userId = response.userId,
+                                accessToken = response.accessToken,
+                                refreshToken = response.refreshToken
+                            )
+                            _eventState.emit(LoginEvent.Success(response))
+                        } catch (e: CancellationException) {
+                            throw e
+                        } catch (e: Exception) {
+                            _eventState.emit(LoginEvent.Error("Something went wrong. Please try again."))
+                        }
+                    }
 
                     LoginResult.InvalidCredentials ->
                         _eventState.emit(LoginEvent.Error("Invalid email or password"))
