@@ -59,7 +59,17 @@ class RegisterFragment : Fragment() {
                                 ).show()
                             }
 
-                            RegisterEvent.Success -> Unit // Navigation on success is handled in a later step.
+                            is RegisterEvent.Success -> {
+                                // No auto-login: confirm and send the user back to Login.
+                                Toast.makeText(
+                                    requireContext(),
+                                    "Account created. Please log in.",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                                findNavController().navigate(
+                                    RegisterFragmentDirections.actionRegisterFragmentToLoginFragment()
+                                )
+                            }
                         }
                     }
                 }
