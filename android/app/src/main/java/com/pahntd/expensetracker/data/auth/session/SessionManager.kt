@@ -40,6 +40,18 @@ class SessionManager @Inject constructor(
     }
 
     /**
+     * Replaces only the access token, leaving the refresh token and user id untouched. Used after
+     * a successful /auth/refresh (the backend does not rotate refresh tokens).
+     */
+    suspend fun updateAccessToken(accessToken: String) {
+        dataStore.updateData { current ->
+            current.toBuilder()
+                .setAccessToken(accessToken)
+                .build()
+        }
+    }
+
+    /**
      * Emits the current [Session] whenever it changes, or `null` when there is no active local
      * session. "Active" is decided purely locally: a non-blank refresh token means a session
      * exists; a blank one means it does not. No server call or token validation happens here.
