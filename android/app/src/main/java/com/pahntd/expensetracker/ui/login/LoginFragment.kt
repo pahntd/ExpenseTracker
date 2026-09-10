@@ -59,7 +59,15 @@ class LoginFragment : Fragment() {
                                 ).show()
                             }
 
-                            LoginEvent.Success -> Unit // Navigation on success is handled in a later step.
+                            is LoginEvent.Success -> {
+                                // Temporary: proves login succeeded. Token persistence and
+                                // navigation are handled in later steps.
+                                Toast.makeText(
+                                    requireContext(),
+                                    "Login successful",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
                         }
                     }
                 }
