@@ -99,6 +99,8 @@ dependencies {
     // DataStore (Proto)
     implementation(libs.androidx.datastore)
     implementation(libs.protobuf.javalite)
+    // Session encryption (Tink AEAD + Android Keystore)
+    implementation(libs.tink.android)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

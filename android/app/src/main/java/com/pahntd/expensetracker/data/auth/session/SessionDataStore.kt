@@ -1,21 +1,33 @@
 package com.pahntd.expensetracker.data.auth.session
 
 import android.content.Context
+import android.util.Log
 import androidx.datastore.core.DataStore
-import androidx.datastore.dataStore
+import androidx.datastore.core.DataStoreFactory
+import androidx.datastore.core.handlers.ReplaceFileCorruptionHandler
+import androidx.datastore.dataStoreFile
 
-/** File name of the single Proto DataStore that persists the authentication [Session]. */
+/** File backing the single session Proto DataStore. Contents are Tink-AEAD encrypted at rest. */
 private const val SESSION_DATA_STORE_FILE_NAME = "session.pb"
 
+private const val TAG = "SessionDataStore"
+
 /**
- * The one application-level Proto DataStore for the authentication [Session].
+ * Builds the one application-level [DataStore] for the authentication [Session].
  *
- * The [dataStore] delegate guarantees exactly one active [DataStore] per process for
- * [SESSION_DATA_STORE_FILE_NAME]; nothing else should open a DataStore on that file.
- * Consumers inject `DataStore<Session>` (see `di/DataStoreModule`) rather than touching this
- * property directly.
+ * Called exactly once, from `di/DataStoreModule`; nothing else opens [SESSION_DATA_STORE_FILE_NAME].
+ * On a [androidx.datastore.core.CorruptionException] from [SessionSerializer] (failed decryption or
+ * protobuf parse) the file is reset to [SessionSerializer.defaultValue] — an empty session — rather
+ * than propagating a crash to readers.
  */
-val Context.sessionDataStore: DataStore<Session> by dataStore(
-    fileName = SESSION_DATA_STORE_FILE_NAME,
-    serializer = SessionSerializer,
+internal fun createSessionDataStore(
+    context: Context,
+    serializer: SessionSerializer,
+): DataStore<Session> = DataStoreFactory.create(
+    serializer = serializer,
+    corruptionHandler = ReplaceFileCorruptionHandler { exception ->
+        Log.w(TAG, "Session store unreadable; resetting to an empty session.", exception)
+        serializer.defaultValue
+    },
+    produceFile = { context.dataStoreFile(SESSION_DATA_STORE_FILE_NAME) },
 )
