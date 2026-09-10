@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+option java_package = "com.pahntd.expensetracker.data.auth.session";
+option java_outer_classname = "SessionProto";
+option java_multiple_files = true;
+
+// Persistent authentication session. Fields are populated in a later step;
+// kept intentionally minimal.
+message Session {
+  string access_token = 1;
+  string refresh_token = 2;
+  string user_id = 3;
+}

@@ -4,6 +4,7 @@ plugins {
     alias(libs.plugins.ksp)
     alias(libs.plugins.hilt)
     alias(libs.plugins.navigation.safe.args)
+    alias(libs.plugins.protobuf)
     kotlin("kapt")
 }
 
@@ -46,6 +47,22 @@ android {
     }
 }
 
+// Proto DataStore: generate Java "lite" protobuf classes from src/main/proto.
+protobuf {
+    protoc {
+        artifact = "com.google.protobuf:protoc:${libs.versions.protobuf.get()}"
+    }
+    generateProtoTasks {
+        all().forEach { task ->
+            task.builtins {
+                create("java") {
+                    option("lite")
+                }
+            }
+        }
+    }
+}
+
 dependencies {
 
     implementation(libs.androidx.core.ktx)
@@ -79,6 +96,9 @@ dependencies {
     implementation(libs.retrofit)
     implementation(libs.retrofit.converter.gson)
     implementation(libs.okhttp)
+    // DataStore (Proto)
+    implementation(libs.androidx.datastore)
+    implementation(libs.protobuf.javalite)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

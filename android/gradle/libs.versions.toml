@@ -20,6 +20,9 @@ hiltNavigation = "1.2.0"
 ksp = "1.9.24-1.0.20"
 retrofit = "2.11.0"
 okhttp = "4.12.0"
+datastore = "1.1.1"
+protobuf = "3.25.5"
+protobufPlugin = "0.9.4"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -56,6 +59,9 @@ androidx-hilt-navigation = { group = "androidx.hilt", name = "hilt-navigation-fr
 retrofit = { group = "com.squareup.retrofit2", name = "retrofit", version.ref = "retrofit" }
 retrofit-converter-gson = { group = "com.squareup.retrofit2", name = "converter-gson", version.ref = "retrofit" }
 okhttp = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhttp" }
+# DataStore (Proto)
+androidx-datastore = { group = "androidx.datastore", name = "datastore", version.ref = "datastore" }
+protobuf-javalite = { group = "com.google.protobuf", name = "protobuf-javalite", version.ref = "protobuf" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
@@ -63,3 +69,4 @@ kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 hilt = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }
 navigation-safe-args = { id = "androidx.navigation.safeargs.kotlin", version.ref = "navigation" }
+protobuf = { id = "com.google.protobuf", version.ref = "protobufPlugin" }
