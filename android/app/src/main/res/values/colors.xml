@@ -10,6 +10,7 @@
     <color name="bottom_bar_icon_active_indicator_color">#23D0C8</color>
     <color name="bg_fb_add_category">#009688</color>
     <color name="blur_text_color">#949494</color>
+    <color name="primary_blue">#2196F3</color>
 
     <color name="switch_thumb_on">#FFFFFF</color>
     <color name="switch_thumb_off">#757575</color>

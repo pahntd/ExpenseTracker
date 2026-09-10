@@ -38,14 +38,14 @@ class SplashFragment : Fragment() {
         viewModel.initialize {
             Log.d(TAG, "onViewCreated: Seed Done")
         }
-        navigateToHome()
+        navigateToLogin()
     }
 
-    private fun navigateToHome() {
+    private fun navigateToLogin() {
         viewLifecycleOwner.lifecycleScope.launch {
             delay(1000)
             findNavController().navigate(
-                SplashFragmentDirections.actionSplashFragmentToHomeFragment()
+                SplashFragmentDirections.actionSplashFragmentToLoginFragment()
             )
         }
     }
