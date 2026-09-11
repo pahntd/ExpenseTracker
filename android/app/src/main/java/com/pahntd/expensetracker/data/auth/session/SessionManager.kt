@@ -1,8 +1,13 @@
 package com.pahntd.expensetracker.data.auth.session
 
 import androidx.datastore.core.DataStore
+import com.pahntd.expensetracker.di.ApplicationScope
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -19,7 +24,41 @@ import javax.inject.Singleton
 @Singleton
 class SessionManager @Inject constructor(
     private val dataStore: DataStore<Session>,
+    @ApplicationScope private val applicationScope: CoroutineScope,
 ) {
+
+    /**
+     * In-memory cache of the current access token, kept in sync with [dataStore] in the
+     * background. This is what [AuthInterceptor][com.pahntd.expensetracker.data.remote.interceptor.AuthInterceptor]
+     * reads: `Interceptor.intercept()` is synchronous and must never touch DataStore or block on
+     * a coroutine, so it cannot read [dataStore] directly. DataStore remains the source of truth;
+     * this field only mirrors it for synchronous access.
+     */
+    @Volatile
+    private var currentAccessToken: String? = null
+
+    /**
+     * In-memory cache of the current refresh token, mirrored the same way as [currentAccessToken].
+     * Read by [AuthAuthenticator][com.pahntd.expensetracker.data.remote.authenticator.AuthAuthenticator],
+     * whose `authenticate()` also runs synchronously on an OkHttp thread.
+     */
+    @Volatile
+    private var currentRefreshToken: String? = null
+
+    init {
+        dataStore.data
+            .onEach { session ->
+                currentAccessToken = session.accessToken.ifBlank { null }
+                currentRefreshToken = session.refreshToken.ifBlank { null }
+            }
+            .launchIn(applicationScope)
+    }
+
+    /** Synchronous snapshot of the current access token, or `null` if there is none. */
+    fun getCurrentAccessToken(): String? = currentAccessToken
+
+    /** Synchronous snapshot of the current refresh token, or `null` if there is none. */
+    fun getCurrentRefreshToken(): String? = currentRefreshToken
 
     /**
      * Persists the session returned by a successful authentication. Overwrites any existing
@@ -48,6 +87,20 @@ class SessionManager @Inject constructor(
             current.toBuilder()
                 .setAccessToken(accessToken)
                 .build()
+        }
+    }
+
+    /**
+     * Synchronous counterpart to [updateAccessToken], for callers that cannot suspend.
+     * [AuthAuthenticator][com.pahntd.expensetracker.data.remote.authenticator.AuthAuthenticator]
+     * runs on an OkHttp thread and must return the rebuilt request immediately, so this updates
+     * the in-memory cache right away and persists to DataStore in the background on
+     * [applicationScope].
+     */
+    fun updateAccessTokenBlocking(accessToken: String) {
+        currentAccessToken = accessToken
+        applicationScope.launch {
+            updateAccessToken(accessToken)
         }
     }
 
