@@ -121,4 +121,18 @@ class SessionManager @Inject constructor(
     suspend fun clearSession() {
         dataStore.updateData { Session.getDefaultInstance() }
     }
+
+    /**
+     * Synchronous counterpart to [clearSession], for callers that cannot suspend.
+     * [AuthAuthenticator][com.pahntd.expensetracker.data.remote.authenticator.AuthAuthenticator]
+     * runs on an OkHttp thread, so this clears the in-memory tokens right away and clears
+     * DataStore in the background on [applicationScope].
+     */
+    fun clearSessionBlocking() {
+        currentAccessToken = null
+        currentRefreshToken = null
+        applicationScope.launch {
+            clearSession()
+        }
+    }
 }
