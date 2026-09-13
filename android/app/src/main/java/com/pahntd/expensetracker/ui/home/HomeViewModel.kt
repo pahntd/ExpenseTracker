@@ -3,7 +3,7 @@ package com.pahntd.expensetracker.ui.home
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.pahntd.expensetracker.data.local.converter.TransactionType
-import com.pahntd.expensetracker.data.repository.ExpenseRepository
+import com.pahntd.expensetracker.data.repository.TransactionRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -16,7 +16,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(
-    private val expenseRepository: ExpenseRepository
+    private val transactionRepository: TransactionRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(HomeUiState())
@@ -31,7 +31,7 @@ class HomeViewModel @Inject constructor(
 
     private fun observeSummary() {
         viewModelScope.launch {
-            expenseRepository.getAllExpensesWithCategory().collect { list ->
+            transactionRepository.getAllExpensesWithCategory().collect { list ->
                 val income = list.filter { it.expense.type == TransactionType.INCOME }
                     .sumOf { it.expense.amount }
                 val expense = list.filter { it.expense.type == TransactionType.EXPENSE }
@@ -52,9 +52,9 @@ class HomeViewModel @Inject constructor(
         viewModelScope.launch {
             searchQuery.flatMapLatest { keyword ->
                 if (keyword.isBlank()) {
-                    expenseRepository.getAllExpensesWithCategory()
+                    transactionRepository.getAllExpensesWithCategory()
                 } else {
-                    expenseRepository.searchExpense(keyword)
+                    transactionRepository.searchExpense(keyword)
                 }
             }.collect { list ->
                 _uiState.update {

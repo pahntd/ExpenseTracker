@@ -2,7 +2,9 @@ package com.pahntd.expensetracker.di
 
 import com.pahntd.expensetracker.BuildConfig
 import com.pahntd.expensetracker.data.remote.api.AuthApi
+import com.pahntd.expensetracker.data.remote.api.CategoryApi
 import com.pahntd.expensetracker.data.remote.api.TokenRefreshApi
+import com.pahntd.expensetracker.data.remote.api.TransactionApi
 import com.pahntd.expensetracker.data.remote.authenticator.AuthAuthenticator
 import com.pahntd.expensetracker.data.remote.interceptor.AuthInterceptor
 import dagger.Module
@@ -87,5 +89,17 @@ object NetworkModule {
     @BareClient
     fun provideTokenRefreshApi(@BareClient retrofit: Retrofit): TokenRefreshApi {
         return retrofit.create(TokenRefreshApi::class.java)
+    }
+
+    @Provides
+    @Singleton
+    fun provideCategoryApi(retrofit: Retrofit): CategoryApi {
+        return retrofit.create(CategoryApi::class.java)
+    }
+
+    @Provides
+    @Singleton
+    fun provideTransactionApi(retrofit: Retrofit): TransactionApi {
+        return retrofit.create(TransactionApi::class.java)
     }
 }

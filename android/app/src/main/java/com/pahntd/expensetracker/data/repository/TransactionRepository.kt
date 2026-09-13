@@ -7,7 +7,7 @@ import com.pahntd.expensetracker.data.local.relation.ExpenseWithCategory
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 
-class ExpenseRepository @Inject constructor(
+class TransactionRepository @Inject constructor(
     private val expenseDao: ExpenseDao
 ) {
 

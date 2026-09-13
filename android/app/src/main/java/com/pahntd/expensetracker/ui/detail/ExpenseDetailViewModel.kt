@@ -3,7 +3,7 @@ package com.pahntd.expensetracker.ui.detail
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.pahntd.expensetracker.data.repository.ExpenseRepository
+import com.pahntd.expensetracker.data.repository.TransactionRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -17,7 +17,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class ExpenseDetailViewModel @Inject constructor(
-    private val expenseRepository: ExpenseRepository,
+    private val transactionRepository: TransactionRepository,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
@@ -35,7 +35,7 @@ class ExpenseDetailViewModel @Inject constructor(
 
     private fun observeExpense() {
         viewModelScope.launch {
-            expenseRepository.getExpenseWithCategoryById(expenseId)
+            transactionRepository.getExpenseWithCategoryById(expenseId)
                 .collect { expense ->
                     _uiState.update {
                         it.copy(
@@ -48,7 +48,7 @@ class ExpenseDetailViewModel @Inject constructor(
 
     fun deleteExpense() {
         viewModelScope.launch {
-            expenseRepository.deleteExpenseById(expenseId)
+            transactionRepository.deleteExpenseById(expenseId)
             _eventState.emit(ExpenseDetailEventState.DeleteSuccess)
         }
     }

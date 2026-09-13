@@ -7,7 +7,7 @@ import com.pahntd.expensetracker.data.local.converter.TransactionType
 import com.pahntd.expensetracker.data.local.entity.CategoryEntity
 import com.pahntd.expensetracker.data.local.entity.ExpenseEntity
 import com.pahntd.expensetracker.data.repository.CategoryRepository
-import com.pahntd.expensetracker.data.repository.ExpenseRepository
+import com.pahntd.expensetracker.data.repository.TransactionRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -20,7 +20,7 @@ import javax.inject.Inject
 @HiltViewModel
 class AddExpenseViewModel @Inject constructor(
     private val categoryRepository: CategoryRepository,
-    private val expenseRepository: ExpenseRepository,
+    private val transactionRepository: TransactionRepository,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(AddExpenseUiState())
@@ -53,7 +53,7 @@ class AddExpenseViewModel @Inject constructor(
     private fun loadExpenseEditMode() {
         viewModelScope.launch {
             val expenseWithCategory =
-                expenseRepository.findExpenseWithCategoryById(expenseId) ?: return@launch
+                transactionRepository.findExpenseWithCategoryById(expenseId) ?: return@launch
             _uiState.update {
                 it.copy(
                     amount = expenseWithCategory.expense.amount.toString(),
@@ -144,9 +144,9 @@ class AddExpenseViewModel @Inject constructor(
                 title = state.note
             )
             if (isEditMode) {
-                expenseRepository.updateExpense(expense.copy(id = expenseId))
+                transactionRepository.updateExpense(expense.copy(id = expenseId))
             } else {
-                expenseRepository.insertExpense(expense)
+                transactionRepository.insertExpense(expense)
             }
             _eventState.emit(AddExpenseEventState.Success)
         }
