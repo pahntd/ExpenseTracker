@@ -20,5 +20,25 @@ fun Application.configureStatusPages() {
                 )
             )
         }
+
+        exception<NoSuchElementException> { call, cause ->
+
+            call.respond(
+                status = HttpStatusCode.NotFound,
+                message = ErrorResponse(
+                    error = cause.message ?: "Resource not found"
+                )
+            )
+        }
+
+        exception<IllegalStateException> { call, cause ->
+
+            call.respond(
+                status = HttpStatusCode.Conflict,
+                message = ErrorResponse(
+                    error = cause.message ?: "Request conflicts with current state"
+                )
+            )
+        }
     }
 }

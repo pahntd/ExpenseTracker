@@ -34,6 +34,9 @@ import kotlin.uuid.Uuid
 
 fun Application.configureRouting() {
     routing {
+        categoryRoutes()
+        transactionRoutes()
+
         get("/") {
             call.respondText("Hello, World!")
         }
