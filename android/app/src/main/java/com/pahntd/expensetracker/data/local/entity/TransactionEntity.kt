@@ -19,7 +19,7 @@ import com.pahntd.expensetracker.data.local.converter.TransactionType
     indices = [Index("categoryId")]
 
 )
-data class ExpenseEntity(
+data class TransactionEntity(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
     val amount: Double,

@@ -5,7 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.pahntd.expensetracker.data.local.converter.TransactionType
 import com.pahntd.expensetracker.data.local.entity.CategoryEntity
-import com.pahntd.expensetracker.data.local.entity.ExpenseEntity
+import com.pahntd.expensetracker.data.local.entity.TransactionEntity
 import com.pahntd.expensetracker.data.repository.CategoryRepository
 import com.pahntd.expensetracker.data.repository.TransactionRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -56,11 +56,11 @@ class AddExpenseViewModel @Inject constructor(
                 transactionRepository.findExpenseWithCategoryById(expenseId) ?: return@launch
             _uiState.update {
                 it.copy(
-                    amount = expenseWithCategory.expense.amount.toString(),
-                    type = expenseWithCategory.expense.type,
+                    amount = expenseWithCategory.transaction.amount.toString(),
+                    type = expenseWithCategory.transaction.type,
                     selectedCategory = expenseWithCategory.category,
-                    date = expenseWithCategory.expense.date,
-                    note = expenseWithCategory.expense.title.orEmpty()
+                    date = expenseWithCategory.transaction.date,
+                    note = expenseWithCategory.transaction.title.orEmpty()
                 )
             }
             _eventState.emit(
@@ -131,7 +131,7 @@ class AddExpenseViewModel @Inject constructor(
                 }
             }
 
-            val expense = ExpenseEntity(
+            val transaction = TransactionEntity(
 
                 amount = state.amount.toDouble(),
 
@@ -144,9 +144,9 @@ class AddExpenseViewModel @Inject constructor(
                 title = state.note
             )
             if (isEditMode) {
-                transactionRepository.updateExpense(expense.copy(id = expenseId))
+                transactionRepository.updateExpense(transaction.copy(id = expenseId))
             } else {
-                transactionRepository.insertExpense(expense)
+                transactionRepository.insertExpense(transaction)
             }
             _eventState.emit(AddExpenseEventState.Success)
         }

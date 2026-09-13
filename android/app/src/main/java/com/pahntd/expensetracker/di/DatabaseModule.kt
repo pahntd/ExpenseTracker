@@ -3,7 +3,7 @@ package com.pahntd.expensetracker.di
 import android.content.Context
 import androidx.room.Room
 import com.pahntd.expensetracker.data.local.dao.CategoryDao
-import com.pahntd.expensetracker.data.local.dao.ExpenseDao
+import com.pahntd.expensetracker.data.local.dao.TransactionDao
 import com.pahntd.expensetracker.data.local.database.ExpenseDatabase
 import dagger.Module
 import dagger.Provides
@@ -29,8 +29,8 @@ object DatabaseModule {
     @Provides
     fun provideExpenseDao(
         database: ExpenseDatabase
-    ): ExpenseDao {
-        return database.expenseDao()
+    ): TransactionDao {
+        return database.transactionDao()
     }
 
     @Provides

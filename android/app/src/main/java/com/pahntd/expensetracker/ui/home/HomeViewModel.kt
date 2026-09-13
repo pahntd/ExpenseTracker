@@ -32,10 +32,10 @@ class HomeViewModel @Inject constructor(
     private fun observeSummary() {
         viewModelScope.launch {
             transactionRepository.getAllExpensesWithCategory().collect { list ->
-                val income = list.filter { it.expense.type == TransactionType.INCOME }
-                    .sumOf { it.expense.amount }
-                val expense = list.filter { it.expense.type == TransactionType.EXPENSE }
-                    .sumOf { it.expense.amount }
+                val income = list.filter { it.transaction.type == TransactionType.INCOME }
+                    .sumOf { it.transaction.amount }
+                val expense = list.filter { it.transaction.type == TransactionType.EXPENSE }
+                    .sumOf { it.transaction.amount }
                 _uiState.update {
                     it.copy(
                         totalIncome = income,

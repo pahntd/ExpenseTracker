@@ -27,9 +27,9 @@ class TransactionAdapter(
         fun bind(item: ExpenseWithCategory) {
             binding.apply {
                 tvCategory.text = item.category.name
-                tvDate.text = formatDate(item.expense.date)
+                tvDate.text = formatDate(item.transaction.date)
                 imgCategory.setImageResource(IconMapper.getDrawable(item.category.icon))
-                binding.tvTitle.text = item.expense.title
+                binding.tvTitle.text = item.transaction.title
                 formatAmount(item, tvAmount)
             }
             binding.root.setOnClickListener {
@@ -40,8 +40,8 @@ class TransactionAdapter(
 
     @SuppressLint("SetTextI18n")
     private fun formatAmount(item: ExpenseWithCategory, textView: TextView) {
-        val amount = "%,.0f ₫".format(item.expense.amount)
-        if (item.expense.type == TransactionType.INCOME) {
+        val amount = "%,.0f ₫".format(item.transaction.amount)
+        if (item.transaction.type == TransactionType.INCOME) {
             textView.text = "+$amount"
             textView.setTextColor(Color.GREEN)
         } else {
@@ -62,7 +62,7 @@ class TransactionAdapter(
                 oldItem: ExpenseWithCategory,
                 newItem: ExpenseWithCategory
             ): Boolean {
-                return oldItem.expense.id == newItem.expense.id
+                return oldItem.transaction.id == newItem.transaction.id
             }
 
             override fun areContentsTheSame(

@@ -54,7 +54,7 @@ class ExpenseDetailFragment : Fragment() {
                     viewModel.uiState.collect { state ->
                         state.expense?.let { expenseWithCategory ->
                             binding.tvAmount.text =
-                                expenseWithCategory.expense.amount.toCurrency()
+                                expenseWithCategory.transaction.amount.toCurrency()
                             binding.tvCategory.text =
                                 expenseWithCategory.category.name
                             binding.tvDate.text =
@@ -62,10 +62,10 @@ class ExpenseDetailFragment : Fragment() {
                                     "dd/MM/yyyy",
                                     Locale.getDefault()
                                 ).format(
-                                    Date(expenseWithCategory.expense.date)
+                                    Date(expenseWithCategory.transaction.date)
                                 )
                             binding.tvTitle.text =
-                                expenseWithCategory.expense.title ?: "No note"
+                                expenseWithCategory.transaction.title ?: "No note"
                         }
                     }
                 }

@@ -7,13 +7,13 @@ import androidx.room.TypeConverters
 import com.pahntd.expensetracker.data.local.DefaultCategories
 import com.pahntd.expensetracker.data.local.converter.TransactionTypeConverter
 import com.pahntd.expensetracker.data.local.dao.CategoryDao
-import com.pahntd.expensetracker.data.local.dao.ExpenseDao
+import com.pahntd.expensetracker.data.local.dao.TransactionDao
 import com.pahntd.expensetracker.data.local.entity.CategoryEntity
-import com.pahntd.expensetracker.data.local.entity.ExpenseEntity
+import com.pahntd.expensetracker.data.local.entity.TransactionEntity
 
 @Database(
     entities = [
-        ExpenseEntity::class,
+        TransactionEntity::class,
         CategoryEntity::class
     ],
     version = 1,
@@ -22,13 +22,13 @@ import com.pahntd.expensetracker.data.local.entity.ExpenseEntity
 @TypeConverters(TransactionTypeConverter::class)
 abstract class ExpenseDatabase : RoomDatabase() {
 
-    abstract fun expenseDao(): ExpenseDao
+    abstract fun transactionDao(): TransactionDao
 
     abstract fun categoryDao(): CategoryDao
 
     @Transaction
     open suspend fun resetAllData() {
-        expenseDao().deleteAll()
+        transactionDao().deleteAll()
         categoryDao().deleteAll()
         categoryDao().insertAll(
             DefaultCategories.categories

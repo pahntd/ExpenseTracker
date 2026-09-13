@@ -59,7 +59,7 @@ class HomeFragment : Fragment() {
         adapter = TransactionAdapter(onClickItem = {
             findNavController().navigate(
                 HomeFragmentDirections.actionHomeFragmentToExpenseDetailFragment(
-                    it.expense.id
+                    it.transaction.id
                 )
             )
         })

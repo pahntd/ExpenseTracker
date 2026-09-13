@@ -8,25 +8,25 @@ import androidx.room.Query
 import androidx.room.Transaction
 import androidx.room.Update
 import com.pahntd.expensetracker.data.local.converter.TransactionType
-import com.pahntd.expensetracker.data.local.entity.ExpenseEntity
+import com.pahntd.expensetracker.data.local.entity.TransactionEntity
 import com.pahntd.expensetracker.data.local.relation.CategoryWithAmountSummary
 import com.pahntd.expensetracker.data.local.relation.ExpenseWithCategory
 import kotlinx.coroutines.flow.Flow
 
 @Dao
-interface ExpenseDao {
+interface TransactionDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insert(expense: ExpenseEntity)
+    suspend fun insert(expense: TransactionEntity)
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertAll(expenses: List<ExpenseEntity>)
+    suspend fun insertAll(expenses: List<TransactionEntity>)
 
     @Update
-    suspend fun update(expense: ExpenseEntity)
+    suspend fun update(expense: TransactionEntity)
 
     @Delete
-    suspend fun delete(expense: ExpenseEntity)
+    suspend fun delete(expense: TransactionEntity)
 
     @Query("DELETE FROM expenses WHERE id = :id")
     suspend fun deleteById(id: Long)
@@ -35,16 +35,16 @@ interface ExpenseDao {
     suspend fun deleteAll()
 
     @Query("SELECT * FROM expenses ORDER BY date DESC")
-    fun getAll(): Flow<List<ExpenseEntity>>
+    fun getAll(): Flow<List<TransactionEntity>>
 
     @Query("SELECT * FROM expenses WHERE id = :id")
-    suspend fun findById(id: Long): ExpenseEntity?
+    suspend fun findById(id: Long): TransactionEntity?
 
     @Query("SELECT * FROM expenses WHERE categoryId = :categoryId ORDER BY date DESC")
-    fun findByCategory(categoryId: Long): Flow<List<ExpenseEntity>>
+    fun findByCategory(categoryId: Long): Flow<List<TransactionEntity>>
 
     @Query("SELECT * FROM expenses WHERE type = :type ORDER BY date DESC")
-    fun findByType(type: TransactionType): Flow<List<ExpenseEntity>>
+    fun findByType(type: TransactionType): Flow<List<TransactionEntity>>
 
     @Query(
         """
@@ -69,7 +69,7 @@ interface ExpenseDao {
     fun getBetweenDate(
         startDate: Long,
         endDate: Long
-    ): Flow<List<ExpenseEntity>>
+    ): Flow<List<TransactionEntity>>
 
     @Query(
         """

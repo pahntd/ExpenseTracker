@@ -135,15 +135,15 @@ class AddExpenseFragment : Fragment() {
     }
 
     private fun renderEditData(expense: ExpenseWithCategory) {
-        binding.etAmount.setText(expense.expense.amount.toCurrency())
+        binding.etAmount.setText(expense.transaction.amount.toCurrency())
 
-        binding.etTitle.setText(expense.expense.title)
+        binding.etTitle.setText(expense.transaction.title)
 
         binding.etDate.setText(
-            expense.expense.date.toDateString()
+            expense.transaction.date.toDateString()
         )
 
-        when (expense.expense.type) {
+        when (expense.transaction.type) {
             TransactionType.EXPENSE -> {
                 binding.rbExpense.isChecked = true
             }
