@@ -53,6 +53,16 @@ class ExposedTransactionRepository : TransactionRepository {
         }
     }
 
+    override fun existsByCategoryId(categoryId: Uuid, userId: Uuid): Boolean {
+        return transaction {
+            TransactionTable
+                .selectAll()
+                .where { (TransactionTable.categoryId eq categoryId) and (TransactionTable.userId eq userId) }
+                .limit(1)
+                .count() > 0
+        }
+    }
+
     override fun update(
         id: Uuid,
         userId: Uuid,

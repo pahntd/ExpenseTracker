@@ -2,6 +2,7 @@ package com.pahntd.expensetracker.repository
 
 import com.pahntd.expensetracker.database.table.CategoryTable
 import com.pahntd.expensetracker.model.Category
+import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.jdbc.deleteWhere
@@ -34,16 +35,7 @@ class ExposedCategoryRepository : CategoryRepository {
                 .selectAll()
                 .where { (CategoryTable.id eq id) and (CategoryTable.userId eq userId) }
                 .singleOrNull()
-                ?.let { row ->
-                    Category(
-                        id = row[CategoryTable.id],
-                        userId = row[CategoryTable.userId],
-                        name = row[CategoryTable.name],
-                        icon = row[CategoryTable.icon],
-                        createdAt = row[CategoryTable.createdAt],
-                        updatedAt = row[CategoryTable.updatedAt]
-                    )
-                }
+                ?.let { row -> row.toCategory() }
         }
     }
 
@@ -52,16 +44,17 @@ class ExposedCategoryRepository : CategoryRepository {
             CategoryTable
                 .selectAll()
                 .where { CategoryTable.userId eq userId }
-                .map { row ->
-                    Category(
-                        id = row[CategoryTable.id],
-                        userId = row[CategoryTable.userId],
-                        name = row[CategoryTable.name],
-                        icon = row[CategoryTable.icon],
-                        createdAt = row[CategoryTable.createdAt],
-                        updatedAt = row[CategoryTable.updatedAt]
-                    )
-                }
+                .map { row -> row.toCategory() }
+        }
+    }
+
+    override fun findByUserIdAndName(userId: Uuid, name: String): Category? {
+        return transaction {
+            CategoryTable
+                .selectAll()
+                .where { (CategoryTable.userId eq userId) and (CategoryTable.name eq name) }
+                .singleOrNull()
+                ?.let { row -> row.toCategory() }
         }
     }
 
@@ -89,16 +82,7 @@ class ExposedCategoryRepository : CategoryRepository {
                 .selectAll()
                 .where { (CategoryTable.id eq id) and (CategoryTable.userId eq userId) }
                 .singleOrNull()
-                ?.let { row ->
-                    Category(
-                        id = row[CategoryTable.id],
-                        userId = row[CategoryTable.userId],
-                        name = row[CategoryTable.name],
-                        icon = row[CategoryTable.icon],
-                        createdAt = row[CategoryTable.createdAt],
-                        updatedAt = row[CategoryTable.updatedAt]
-                    )
-                }
+                ?.let { row -> row.toCategory() }
         }
     }
 
@@ -108,5 +92,16 @@ class ExposedCategoryRepository : CategoryRepository {
                 (CategoryTable.id eq id) and (CategoryTable.userId eq userId)
             } > 0
         }
+    }
+
+    private fun ResultRow.toCategory(): Category {
+        return Category(
+            id = this[CategoryTable.id],
+            userId = this[CategoryTable.userId],
+            name = this[CategoryTable.name],
+            icon = this[CategoryTable.icon],
+            createdAt = this[CategoryTable.createdAt],
+            updatedAt = this[CategoryTable.updatedAt]
+        )
     }
 }

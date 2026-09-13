@@ -11,6 +11,8 @@ interface CategoryRepository {
 
     fun findAll(userId: Uuid): List<Category>
 
+    fun findByUserIdAndName(userId: Uuid, name: String): Category?
+
     fun update(
         id: Uuid,
         userId: Uuid,

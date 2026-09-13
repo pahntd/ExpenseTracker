@@ -13,6 +13,8 @@ interface TransactionRepository {
 
     fun findAll(userId: Uuid): List<Transaction>
 
+    fun existsByCategoryId(categoryId: Uuid, userId: Uuid): Boolean
+
     fun update(
         id: Uuid,
         userId: Uuid,
