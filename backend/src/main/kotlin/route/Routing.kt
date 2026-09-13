@@ -1,4 +1,4 @@
-package com.pahntd.expensetracker
+package com.pahntd.expensetracker.route
 
 import com.pahntd.expensetracker.api.EchoRequest
 import com.pahntd.expensetracker.api.EchoResponse
@@ -19,7 +19,6 @@ import com.pahntd.expensetracker.auth.TokenService
 import com.pahntd.expensetracker.model.RefreshToken
 import com.pahntd.expensetracker.repository.ExposedRefreshTokenRepository
 import com.pahntd.expensetracker.repository.ExposedUserRepository
-import com.pahntd.expensetracker.repository.RefreshTokenRepository
 import com.pahntd.expensetracker.service.AuthService
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.*
@@ -27,7 +26,6 @@ import io.ktor.server.auth.authenticate
 import io.ktor.server.request.receive
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import java.time.OffsetDateTime
 import java.time.OffsetDateTime.now
 import java.time.ZoneOffset
 import kotlin.uuid.Uuid

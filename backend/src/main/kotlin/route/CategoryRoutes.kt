@@ -1,4 +1,4 @@
-package com.pahntd.expensetracker
+package com.pahntd.expensetracker.route
 
 import com.pahntd.expensetracker.api.CreateCategoryRequest
 import com.pahntd.expensetracker.api.UpdateCategoryRequest
@@ -8,7 +8,6 @@ import com.pahntd.expensetracker.repository.ExposedCategoryRepository
 import com.pahntd.expensetracker.repository.ExposedTransactionRepository
 import com.pahntd.expensetracker.service.CategoryService
 import io.ktor.http.HttpStatusCode
-import io.ktor.server.application.call
 import io.ktor.server.auth.authenticate
 import io.ktor.server.request.receive
 import io.ktor.server.response.respond

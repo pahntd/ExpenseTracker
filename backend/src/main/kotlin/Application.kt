@@ -5,6 +5,7 @@ import com.pahntd.expensetracker.database.FlywayConfig
 import com.pahntd.expensetracker.plugins.configureAuthentication
 import com.pahntd.expensetracker.plugins.configureSerialization
 import com.pahntd.expensetracker.plugins.configureStatusPages
+import com.pahntd.expensetracker.route.configureRouting
 import io.ktor.server.application.Application
 
 fun Application.rootModule() {
