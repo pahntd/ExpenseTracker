@@ -55,6 +55,11 @@ class HomeFragment : Fragment() {
         setupListener()
     }
 
+    override fun onResume() {
+        super.onResume()
+        viewModel.pullSync()
+    }
+
     private fun setupRecyclerView() {
         adapter = TransactionAdapter(onClickItem = {
             findNavController().navigate(

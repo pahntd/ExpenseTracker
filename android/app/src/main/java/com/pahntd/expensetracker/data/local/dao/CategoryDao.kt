@@ -5,6 +5,7 @@ import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Transaction
 import androidx.room.Update
 import com.pahntd.expensetracker.data.local.entity.CategoryEntity
 import com.pahntd.expensetracker.data.local.relation.CategoryWithExpenseCount
@@ -21,6 +22,25 @@ interface CategoryDao {
 
     @Update(onConflict = OnConflictStrategy.IGNORE)
     suspend fun update(category: CategoryEntity): Int
+
+    @Query("SELECT * FROM categories WHERE serverId = :serverId LIMIT 1")
+    suspend fun findByServerId(serverId: String): CategoryEntity?
+
+    /**
+     * Upserts pulled server categories, matching existing rows by [CategoryEntity.serverId]
+     * so re-pulling the same server record updates it in place instead of duplicating it.
+     */
+    @Transaction
+    suspend fun upsertAll(categories: List<CategoryEntity>) {
+        categories.forEach { category ->
+            val existing = category.serverId?.let { findByServerId(it) }
+            if (existing != null) {
+                update(category.copy(id = existing.id))
+            } else {
+                insert(category)
+            }
+        }
+    }
 
     @Delete
     suspend fun delete(category: CategoryEntity)

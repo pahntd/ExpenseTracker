@@ -16,7 +16,10 @@ import com.pahntd.expensetracker.data.local.converter.TransactionType
             onDelete = ForeignKey.RESTRICT
         )
     ],
-    indices = [Index("categoryId")]
+    indices = [
+        Index("categoryId"),
+        Index(value = ["serverId"], unique = true)
+    ]
 
 )
 data class TransactionEntity(
@@ -26,5 +29,6 @@ data class TransactionEntity(
     val type: TransactionType,
     val categoryId: Long,
     val date: Long,
-    val title: String?
+    val title: String?,
+    val serverId: String? = null
 )

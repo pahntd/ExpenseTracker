@@ -1,6 +1,7 @@
 package com.pahntd.expensetracker.data.repository
 
 import com.pahntd.expensetracker.data.local.converter.TransactionType
+import com.pahntd.expensetracker.data.local.dao.CategoryDao
 import com.pahntd.expensetracker.data.local.dao.TransactionDao
 import com.pahntd.expensetracker.data.local.entity.TransactionEntity
 import com.pahntd.expensetracker.data.local.relation.ExpenseWithCategory
@@ -8,13 +9,16 @@ import com.pahntd.expensetracker.data.remote.api.TransactionApi
 import com.pahntd.expensetracker.data.remote.dto.CreateTransactionRequest
 import com.pahntd.expensetracker.data.remote.dto.TransactionResponse
 import com.pahntd.expensetracker.data.remote.dto.UpdateTransactionRequest
+import com.pahntd.expensetracker.data.remote.mapper.toEntity
 import kotlinx.coroutines.flow.Flow
 import retrofit2.Response
+import java.util.concurrent.CancellationException
 import javax.inject.Inject
 
 class TransactionRepository @Inject constructor(
     private val transactionDao: TransactionDao,
-    private val transactionApi: TransactionApi
+    private val transactionApi: TransactionApi,
+    private val categoryDao: CategoryDao
 ) {
 
     fun getAllExpenses(): Flow<List<TransactionEntity>> {
@@ -102,6 +106,31 @@ class TransactionRepository @Inject constructor(
 
     suspend fun deleteTransactionOnApi(id: String): Response<Unit> {
         return transactionApi.deleteTransaction(id)
+    }
+
+    /**
+     * Pulls transactions from the server and upserts them into Room. Categories must already be
+     * pulled/mapped locally since each transaction's server categoryId is resolved to the local
+     * category row (transactions FK-reference categories.id, not the server id). On failure, the
+     * existing local data is left untouched so the Room-backed UI keeps working offline.
+     */
+    suspend fun pullTransactions() {
+        val transactions = try {
+            getTransactionsFromApi()
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            return
+        }
+
+        val entities = transactions.mapNotNull { response ->
+            val categoryLocalId = response.categoryId
+                ?.let { categoryDao.findByServerId(it) }
+                ?.id
+                ?: return@mapNotNull null
+            response.toEntity(categoryLocalId)
+        }
+        transactionDao.upsertAll(entities)
     }
 
 }

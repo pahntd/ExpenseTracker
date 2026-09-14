@@ -7,7 +7,8 @@ import androidx.room.PrimaryKey
 @Entity(
     tableName = "categories",
     indices = [
-        Index(value = ["name"], unique = true)
+        Index(value = ["name"], unique = true),
+        Index(value = ["serverId"], unique = true)
     ]
 )
 data class CategoryEntity(
@@ -15,4 +16,5 @@ data class CategoryEntity(
     val id: Long = 0,
     val name: String,
     val icon: String,
+    val serverId: String? = null,
 )

@@ -7,8 +7,10 @@ import com.pahntd.expensetracker.data.remote.api.CategoryApi
 import com.pahntd.expensetracker.data.remote.dto.CategoryResponse
 import com.pahntd.expensetracker.data.remote.dto.CreateCategoryRequest
 import com.pahntd.expensetracker.data.remote.dto.UpdateCategoryRequest
+import com.pahntd.expensetracker.data.remote.mapper.toEntity
 import kotlinx.coroutines.flow.Flow
 import retrofit2.Response
+import java.util.concurrent.CancellationException
 import javax.inject.Inject
 
 class CategoryRepository @Inject constructor(
@@ -70,6 +72,21 @@ class CategoryRepository @Inject constructor(
 
     suspend fun deleteCategoryOnApi(id: String): Response<Unit> {
         return categoryApi.deleteCategory(id)
+    }
+
+    /**
+     * Pulls categories from the server and upserts them into Room. On failure, the existing
+     * local data is left untouched so the Room-backed UI keeps working offline.
+     */
+    suspend fun pullCategories() {
+        val categories = try {
+            getCategoriesFromApi()
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            return
+        }
+        categoryDao.upsertAll(categories.map { it.toEntity() })
     }
 
 }

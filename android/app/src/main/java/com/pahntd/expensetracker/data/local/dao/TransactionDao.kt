@@ -25,6 +25,25 @@ interface TransactionDao {
     @Update
     suspend fun update(expense: TransactionEntity)
 
+    @Query("SELECT * FROM expenses WHERE serverId = :serverId LIMIT 1")
+    suspend fun findByServerId(serverId: String): TransactionEntity?
+
+    /**
+     * Upserts pulled server transactions, matching existing rows by [TransactionEntity.serverId]
+     * so re-pulling the same server record updates it in place instead of duplicating it.
+     */
+    @Transaction
+    suspend fun upsertAll(expenses: List<TransactionEntity>) {
+        expenses.forEach { expense ->
+            val existing = expense.serverId?.let { findByServerId(it) }
+            if (existing != null) {
+                update(expense.copy(id = existing.id))
+            } else {
+                insert(expense)
+            }
+        }
+    }
+
     @Delete
     suspend fun delete(expense: TransactionEntity)
 
