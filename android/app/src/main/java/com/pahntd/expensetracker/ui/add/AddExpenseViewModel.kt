@@ -29,11 +29,11 @@ class AddExpenseViewModel @Inject constructor(
     private val _eventState = MutableSharedFlow<AddExpenseEventState>()
     val eventState = _eventState.asSharedFlow()
 
-    private val expenseId: Long =
-        savedStateHandle["expenseId"] ?: -1L
+    private val expenseId: String? =
+        savedStateHandle["expenseId"]
 
     private val isEditMode: Boolean
-        get() = expenseId != -1L
+        get() = expenseId != null
 
     init {
         loadCategories()
@@ -53,7 +53,7 @@ class AddExpenseViewModel @Inject constructor(
     private fun loadExpenseEditMode() {
         viewModelScope.launch {
             val expenseWithCategory =
-                transactionRepository.findExpenseWithCategoryById(expenseId) ?: return@launch
+                transactionRepository.findExpenseWithCategoryById(expenseId!!) ?: return@launch
             _uiState.update {
                 it.copy(
                     amount = expenseWithCategory.transaction.amount.toString(),
@@ -144,7 +144,7 @@ class AddExpenseViewModel @Inject constructor(
                 title = state.note
             )
             if (isEditMode) {
-                transactionRepository.updateExpense(transaction.copy(id = expenseId))
+                transactionRepository.updateExpense(transaction.copy(id = expenseId!!))
             } else {
                 transactionRepository.insertExpense(transaction)
             }

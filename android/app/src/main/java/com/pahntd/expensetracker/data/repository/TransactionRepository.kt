@@ -29,15 +29,15 @@ class TransactionRepository @Inject constructor(
         return transactionDao.getAllWithCategory()
     }
 
-    suspend fun getExpenseById(id: Long): TransactionEntity? {
+    suspend fun getExpenseById(id: String): TransactionEntity? {
         return transactionDao.findById(id)
     }
 
-    fun getExpenseWithCategoryById(id: Long): Flow<ExpenseWithCategory?> {
+    fun getExpenseWithCategoryById(id: String): Flow<ExpenseWithCategory?> {
         return transactionDao.getExpenseWithCategoryById(id)
     }
 
-    suspend fun findExpenseWithCategoryById(id: Long): ExpenseWithCategory? {
+    suspend fun findExpenseWithCategoryById(id: String): ExpenseWithCategory? {
         return transactionDao.findExpenseWithCategoryById(id)
     }
 
@@ -53,7 +53,7 @@ class TransactionRepository @Inject constructor(
         transactionDao.delete(expense)
     }
 
-    suspend fun deleteExpenseById(id: Long) {
+    suspend fun deleteExpenseById(id: String) {
         transactionDao.deleteById(id)
     }
 
@@ -61,7 +61,7 @@ class TransactionRepository @Inject constructor(
         transactionDao.deleteAll()
     }
 
-    fun getExpensesByCategory(categoryId: Long): Flow<List<TransactionEntity>> {
+    fun getExpensesByCategory(categoryId: String): Flow<List<TransactionEntity>> {
         return transactionDao.findByCategory(categoryId)
     }
 
@@ -109,10 +109,10 @@ class TransactionRepository @Inject constructor(
     }
 
     /**
-     * Pulls transactions from the server and upserts them into Room. Categories must already be
-     * pulled/mapped locally since each transaction's server categoryId is resolved to the local
-     * category row (transactions FK-reference categories.id, not the server id). On failure, the
-     * existing local data is left untouched so the Room-backed UI keeps working offline.
+     * Pulls transactions from the server and upserts them into Room. Local and server share the
+     * same UUID identity, so each transaction's categoryId is reused as-is without needing to
+     * resolve it against a separately-generated local id. On failure, the existing local data is
+     * left untouched so the Room-backed UI keeps working offline.
      */
     suspend fun pullTransactions() {
         val transactions = try {
@@ -123,13 +123,7 @@ class TransactionRepository @Inject constructor(
             return
         }
 
-        val entities = transactions.mapNotNull { response ->
-            val categoryLocalId = response.categoryId
-                ?.let { categoryDao.findByServerId(it) }
-                ?.id
-                ?: return@mapNotNull null
-            response.toEntity(categoryLocalId)
-        }
+        val entities = transactions.mapNotNull { response -> response.toEntity() }
         transactionDao.upsertAll(entities)
     }
 

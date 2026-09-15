@@ -52,8 +52,8 @@ class AddCategoryDialog : DialogFragment() {
         ownerProducer = { requireParentFragment() }
     )
 
-    private val categoryId: Long?
-        get() = arguments?.getLong(ARG_CATEGORY_ID)?.takeIf { it != 0L }
+    private val categoryId: String?
+        get() = arguments?.getString(ARG_CATEGORY_ID)
     private val categoryName: String?
         get() = arguments?.getString(ARG_CATEGORY_NAME)
     private val categoryIcon: String?

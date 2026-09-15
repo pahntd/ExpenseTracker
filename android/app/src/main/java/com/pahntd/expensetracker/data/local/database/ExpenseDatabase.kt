@@ -7,6 +7,7 @@ import androidx.room.TypeConverters
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.pahntd.expensetracker.data.local.DefaultCategories
+import com.pahntd.expensetracker.data.local.converter.SyncStatusConverter
 import com.pahntd.expensetracker.data.local.converter.TransactionTypeConverter
 import com.pahntd.expensetracker.data.local.dao.CategoryDao
 import com.pahntd.expensetracker.data.local.dao.TransactionDao
@@ -21,7 +22,7 @@ import com.pahntd.expensetracker.data.local.entity.TransactionEntity
     version = 2,
     exportSchema = false
 )
-@TypeConverters(TransactionTypeConverter::class)
+@TypeConverters(TransactionTypeConverter::class, SyncStatusConverter::class)
 abstract class ExpenseDatabase : RoomDatabase() {
 
     abstract fun transactionDao(): TransactionDao

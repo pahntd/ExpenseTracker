@@ -63,7 +63,7 @@ class CategoryViewModel @Inject constructor(
         }
     }
 
-    fun deleteCategoryById(id: Long) {
+    fun deleteCategoryById(id: String) {
         viewModelScope.launch {
             categoryRepository.deleteById(id)
         }

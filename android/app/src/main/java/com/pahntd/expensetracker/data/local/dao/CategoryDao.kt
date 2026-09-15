@@ -23,19 +23,16 @@ interface CategoryDao {
     @Update(onConflict = OnConflictStrategy.IGNORE)
     suspend fun update(category: CategoryEntity): Int
 
-    @Query("SELECT * FROM categories WHERE serverId = :serverId LIMIT 1")
-    suspend fun findByServerId(serverId: String): CategoryEntity?
-
     /**
-     * Upserts pulled server categories, matching existing rows by [CategoryEntity.serverId]
-     * so re-pulling the same server record updates it in place instead of duplicating it.
+     * Upserts pulled server categories, matching existing rows by [CategoryEntity.id] since local
+     * and server share the same UUID, so re-pulling the same record updates it in place instead
+     * of duplicating it.
      */
     @Transaction
     suspend fun upsertAll(categories: List<CategoryEntity>) {
         categories.forEach { category ->
-            val existing = category.serverId?.let { findByServerId(it) }
-            if (existing != null) {
-                update(category.copy(id = existing.id))
+            if (findById(category.id) != null) {
+                update(category)
             } else {
                 insert(category)
             }
@@ -55,20 +52,20 @@ interface CategoryDao {
     suspend fun exists(name: String): Boolean
 
     @Query("DELETE FROM categories WHERE id = :id")
-    suspend fun deleteById(id: Long)
+    suspend fun deleteById(id: String)
 
     @Query("SELECT * FROM categories ORDER BY name")
     fun getAll(): Flow<List<CategoryEntity>>
 
     @Query("SELECT * FROM categories WHERE id = :id")
-    suspend fun findById(id: Long): CategoryEntity?
+    suspend fun findById(id: String): CategoryEntity?
 
     @Query("SELECT * FROM categories WHERE name = :name LIMIT 1")
     suspend fun findByName(name: String): CategoryEntity?
 
     @Query(
         """
-    SELECT 
+    SELECT
         categories.id AS categoryId,
         categories.name AS name,
         categories.icon AS icon,

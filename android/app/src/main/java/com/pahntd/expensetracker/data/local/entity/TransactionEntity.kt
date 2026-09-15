@@ -4,7 +4,9 @@ import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
+import com.pahntd.expensetracker.data.local.converter.SyncStatus
 import com.pahntd.expensetracker.data.local.converter.TransactionType
+import java.util.UUID
 
 @Entity(
     tableName = "expenses",
@@ -17,18 +19,19 @@ import com.pahntd.expensetracker.data.local.converter.TransactionType
         )
     ],
     indices = [
-        Index("categoryId"),
-        Index(value = ["serverId"], unique = true)
+        Index("categoryId")
     ]
 
 )
 data class TransactionEntity(
-    @PrimaryKey(autoGenerate = true)
-    val id: Long = 0,
+    @PrimaryKey
+    val id: String = UUID.randomUUID().toString(),
     val amount: Double,
     val type: TransactionType,
-    val categoryId: Long,
+    val categoryId: String,
     val date: Long,
     val title: String?,
-    val serverId: String? = null
+    val updatedAt: Long = System.currentTimeMillis(),
+    val syncStatus: SyncStatus = SyncStatus.PENDING_CREATE,
+    val deletedAt: Long? = null,
 )

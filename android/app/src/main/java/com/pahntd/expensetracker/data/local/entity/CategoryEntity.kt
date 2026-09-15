@@ -3,18 +3,21 @@ package com.pahntd.expensetracker.data.local.entity
 import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
+import com.pahntd.expensetracker.data.local.converter.SyncStatus
+import java.util.UUID
 
 @Entity(
     tableName = "categories",
     indices = [
-        Index(value = ["name"], unique = true),
-        Index(value = ["serverId"], unique = true)
+        Index(value = ["name"], unique = true)
     ]
 )
 data class CategoryEntity(
-    @PrimaryKey(autoGenerate = true)
-    val id: Long = 0,
+    @PrimaryKey
+    val id: String = UUID.randomUUID().toString(),
     val name: String,
     val icon: String,
-    val serverId: String? = null,
+    val updatedAt: Long = System.currentTimeMillis(),
+    val syncStatus: SyncStatus = SyncStatus.PENDING_CREATE,
+    val deletedAt: Long? = null,
 )

@@ -25,19 +25,16 @@ interface TransactionDao {
     @Update
     suspend fun update(expense: TransactionEntity)
 
-    @Query("SELECT * FROM expenses WHERE serverId = :serverId LIMIT 1")
-    suspend fun findByServerId(serverId: String): TransactionEntity?
-
     /**
-     * Upserts pulled server transactions, matching existing rows by [TransactionEntity.serverId]
-     * so re-pulling the same server record updates it in place instead of duplicating it.
+     * Upserts pulled server transactions, matching existing rows by [TransactionEntity.id] since
+     * local and server share the same UUID, so re-pulling the same record updates it in place
+     * instead of duplicating it.
      */
     @Transaction
     suspend fun upsertAll(expenses: List<TransactionEntity>) {
         expenses.forEach { expense ->
-            val existing = expense.serverId?.let { findByServerId(it) }
-            if (existing != null) {
-                update(expense.copy(id = existing.id))
+            if (findById(expense.id) != null) {
+                update(expense)
             } else {
                 insert(expense)
             }
@@ -48,7 +45,7 @@ interface TransactionDao {
     suspend fun delete(expense: TransactionEntity)
 
     @Query("DELETE FROM expenses WHERE id = :id")
-    suspend fun deleteById(id: Long)
+    suspend fun deleteById(id: String)
 
     @Query("DELETE FROM expenses")
     suspend fun deleteAll()
@@ -57,10 +54,10 @@ interface TransactionDao {
     fun getAll(): Flow<List<TransactionEntity>>
 
     @Query("SELECT * FROM expenses WHERE id = :id")
-    suspend fun findById(id: Long): TransactionEntity?
+    suspend fun findById(id: String): TransactionEntity?
 
     @Query("SELECT * FROM expenses WHERE categoryId = :categoryId ORDER BY date DESC")
-    fun findByCategory(categoryId: Long): Flow<List<TransactionEntity>>
+    fun findByCategory(categoryId: String): Flow<List<TransactionEntity>>
 
     @Query("SELECT * FROM expenses WHERE type = :type ORDER BY date DESC")
     fun findByType(type: TransactionType): Flow<List<TransactionEntity>>
@@ -115,11 +112,11 @@ interface TransactionDao {
 
     @Transaction
     @Query("SELECT * FROM expenses WHERE id = :id")
-    fun getExpenseWithCategoryById(id: Long): Flow<ExpenseWithCategory?>
+    fun getExpenseWithCategoryById(id: String): Flow<ExpenseWithCategory?>
 
     @Transaction
     @Query("SELECT * FROM expenses WHERE id = :id")
-    suspend fun findExpenseWithCategoryById(id: Long): ExpenseWithCategory?
+    suspend fun findExpenseWithCategoryById(id: String): ExpenseWithCategory?
 
     @Query(
         """

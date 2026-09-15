@@ -21,7 +21,7 @@ class ExpenseDetailViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
-    private val expenseId: Long = checkNotNull(savedStateHandle["expenseId"])
+    private val expenseId: String = checkNotNull(savedStateHandle["expenseId"])
 
     private val _uiState = MutableStateFlow(ExpenseDetailUiState())
     val uiState: StateFlow<ExpenseDetailUiState> = _uiState.asStateFlow()

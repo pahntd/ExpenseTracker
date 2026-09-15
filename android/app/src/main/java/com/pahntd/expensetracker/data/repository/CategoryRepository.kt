@@ -22,7 +22,7 @@ class CategoryRepository @Inject constructor(
         return categoryDao.getAll()
     }
 
-    suspend fun getCategoryById(id: Long): CategoryEntity? {
+    suspend fun getCategoryById(id: String): CategoryEntity? {
         return categoryDao.findById(id)
     }
 
@@ -46,7 +46,7 @@ class CategoryRepository @Inject constructor(
         categoryDao.deleteAll()
     }
 
-    suspend fun deleteById(id: Long) {
+    suspend fun deleteById(id: String) {
         categoryDao.deleteById(id)
     }
 
