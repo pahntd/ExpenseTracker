@@ -34,18 +34,20 @@ fun Route.transactionRoutes() {
 
                 val transaction = transactionService().create(
                     userId = userId,
+                    id = parseUuid(request.id),
                     amount = parseAmount(request.amount),
                     type = parseTransactionType(request.type),
                     categoryId = parseOptionalUuid(request.categoryId),
                     date = parseOffsetDateTime(request.date),
-                    title = request.title
+                    title = request.title,
+                    updatedAt = parseOffsetDateTime(request.updatedAt)
                 )
 
                 call.respond(HttpStatusCode.Created, transaction.toResponse())
             }
 
             put("/{id}") {
-                val id = parsePathUuid(call.parameters["id"])
+                val id = parseUuid(call.parameters["id"])
                 val userId = call.currentUserId()
                 val request = call.receive<UpdateTransactionRequest>()
 
@@ -56,14 +58,15 @@ fun Route.transactionRoutes() {
                     type = parseTransactionType(request.type),
                     categoryId = parseOptionalUuid(request.categoryId),
                     date = parseOffsetDateTime(request.date),
-                    title = request.title
+                    title = request.title,
+                    updatedAt = parseOffsetDateTime(request.updatedAt)
                 )
 
                 call.respond(transaction.toResponse())
             }
 
             delete("/{id}") {
-                val id = parsePathUuid(call.parameters["id"])
+                val id = parseUuid(call.parameters["id"])
                 val userId = call.currentUserId()
 
                 transactionService().delete(userId = userId, id = id)

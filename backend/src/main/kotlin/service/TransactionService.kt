@@ -19,12 +19,23 @@ class TransactionService(
 ) {
     fun create(
         userId: Uuid,
+        id: Uuid,
         amount: BigDecimal,
         type: TransactionType,
         categoryId: Uuid?,
         date: OffsetDateTime,
-        title: String?
+        title: String?,
+        updatedAt: OffsetDateTime
     ): Transaction {
+        val existing = transactionRepository.findById(id)
+        if (existing != null) {
+            if (existing.userId == userId) {
+                // Retry of a create that already succeeded (e.g. response was lost).
+                return existing
+            }
+            throw IllegalStateException("Transaction id already exists")
+        }
+
         validateAmount(amount)
         val trimmedTitle = validateTitle(title)
 
@@ -32,18 +43,16 @@ class TransactionService(
             ensureCategoryOwnedByUser(categoryId, userId)
         }
 
-        val now = OffsetDateTime.now(ZoneOffset.UTC)
-
         val transaction = Transaction(
-            id = Uuid.random(),
+            id = id,
             userId = userId,
             amount = amount,
             type = type,
             categoryId = categoryId,
             date = date,
             title = trimmedTitle,
-            createdAt = now,
-            updatedAt = now
+            createdAt = OffsetDateTime.now(ZoneOffset.UTC),
+            updatedAt = updatedAt
         )
 
         return transactionRepository.create(transaction)
@@ -65,7 +74,8 @@ class TransactionService(
         type: TransactionType,
         categoryId: Uuid?,
         date: OffsetDateTime,
-        title: String?
+        title: String?,
+        updatedAt: OffsetDateTime
     ): Transaction {
         validateAmount(amount)
         val trimmedTitle = validateTitle(title)
@@ -74,9 +84,7 @@ class TransactionService(
             ensureCategoryOwnedByUser(categoryId, userId)
         }
 
-        val updatedAt = OffsetDateTime.now(ZoneOffset.UTC)
-
-        return transactionRepository.update(
+        val updated = transactionRepository.updateIfNewer(
             id = id,
             userId = userId,
             amount = amount,
@@ -85,7 +93,15 @@ class TransactionService(
             date = date,
             title = trimmedTitle,
             updatedAt = updatedAt
-        ) ?: throw NoSuchElementException("Transaction not found")
+        )
+        if (updated != null) {
+            return updated
+        }
+
+        // Either the record doesn't exist, or the incoming update is stale (Last Edit Wins):
+        // return the current server state so the client can reconcile.
+        return transactionRepository.findById(id, userId)
+            ?: throw NoSuchElementException("Transaction not found")
     }
 
     fun delete(userId: Uuid, id: Uuid) {

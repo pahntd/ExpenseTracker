@@ -16,22 +16,31 @@ class CategoryService(
 ) {
     fun create(
         userId: Uuid,
+        id: Uuid,
         name: String,
-        icon: String
+        icon: String,
+        updatedAt: OffsetDateTime
     ): Category {
+        val existing = categoryRepository.findById(id)
+        if (existing != null) {
+            if (existing.userId == userId) {
+                // Retry of a create that already succeeded (e.g. response was lost).
+                return existing
+            }
+            throw IllegalStateException("Category id already exists")
+        }
+
         val trimmedName = validateName(name)
         val trimmedIcon = validateIcon(icon)
         ensureNameNotTaken(userId, trimmedName, excludingId = null)
 
-        val now = OffsetDateTime.now(ZoneOffset.UTC)
-
         val category = Category(
-            id = Uuid.random(),
+            id = id,
             userId = userId,
             name = trimmedName,
             icon = trimmedIcon,
-            createdAt = now,
-            updatedAt = now
+            createdAt = OffsetDateTime.now(ZoneOffset.UTC),
+            updatedAt = updatedAt
         )
 
         return categoryRepository.create(category)
@@ -50,21 +59,28 @@ class CategoryService(
         userId: Uuid,
         id: Uuid,
         name: String,
-        icon: String
+        icon: String,
+        updatedAt: OffsetDateTime
     ): Category {
         val trimmedName = validateName(name)
         val trimmedIcon = validateIcon(icon)
         ensureNameNotTaken(userId, trimmedName, excludingId = id)
 
-        val updatedAt = OffsetDateTime.now(ZoneOffset.UTC)
-
-        return categoryRepository.update(
+        val updated = categoryRepository.updateIfNewer(
             id = id,
             userId = userId,
             name = trimmedName,
             icon = trimmedIcon,
             updatedAt = updatedAt
-        ) ?: throw NoSuchElementException("Category not found")
+        )
+        if (updated != null) {
+            return updated
+        }
+
+        // Either the record doesn't exist, or the incoming update is stale (Last Edit Wins):
+        // return the current server state so the client can reconcile.
+        return categoryRepository.findById(id, userId)
+            ?: throw NoSuchElementException("Category not found")
     }
 
     fun delete(userId: Uuid, id: Uuid) {

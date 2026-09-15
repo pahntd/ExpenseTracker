@@ -9,11 +9,19 @@ interface CategoryRepository {
 
     fun findById(id: Uuid, userId: Uuid): Category?
 
+    /** Unscoped lookup, used only for UUID-collision/ownership checks on create. */
+    fun findById(id: Uuid): Category?
+
     fun findAll(userId: Uuid): List<Category>
 
     fun findByUserIdAndName(userId: Uuid, name: String): Category?
 
-    fun update(
+    /**
+     * Applies Last-Edit-Wins: updates only if [updatedAt] is strictly newer than the
+     * stored value. Returns the updated row, or null if the row doesn't exist or the
+     * incoming [updatedAt] was not newer (stale).
+     */
+    fun updateIfNewer(
         id: Uuid,
         userId: Uuid,
         name: String,

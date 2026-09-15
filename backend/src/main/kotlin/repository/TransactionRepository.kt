@@ -11,11 +11,19 @@ interface TransactionRepository {
 
     fun findById(id: Uuid, userId: Uuid): Transaction?
 
+    /** Unscoped lookup, used only for UUID-collision/ownership checks on create. */
+    fun findById(id: Uuid): Transaction?
+
     fun findAll(userId: Uuid): List<Transaction>
 
     fun existsByCategoryId(categoryId: Uuid, userId: Uuid): Boolean
 
-    fun update(
+    /**
+     * Applies Last-Edit-Wins: updates only if [updatedAt] is strictly newer than the
+     * stored value. Returns the updated row, or null if the row doesn't exist or the
+     * incoming [updatedAt] was not newer (stale).
+     */
+    fun updateIfNewer(
         id: Uuid,
         userId: Uuid,
         amount: BigDecimal,

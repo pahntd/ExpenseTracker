@@ -5,6 +5,7 @@ import com.pahntd.expensetracker.model.Category
 import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.core.less
 import org.jetbrains.exposed.v1.jdbc.deleteWhere
 import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.selectAll
@@ -39,6 +40,16 @@ class ExposedCategoryRepository : CategoryRepository {
         }
     }
 
+    override fun findById(id: Uuid): Category? {
+        return transaction {
+            CategoryTable
+                .selectAll()
+                .where { CategoryTable.id eq id }
+                .singleOrNull()
+                ?.let { row -> row.toCategory() }
+        }
+    }
+
     override fun findAll(userId: Uuid): List<Category> {
         return transaction {
             CategoryTable
@@ -58,7 +69,7 @@ class ExposedCategoryRepository : CategoryRepository {
         }
     }
 
-    override fun update(
+    override fun updateIfNewer(
         id: Uuid,
         userId: Uuid,
         name: String,
@@ -67,7 +78,11 @@ class ExposedCategoryRepository : CategoryRepository {
     ): Category? {
         return transaction {
             val updatedCount = CategoryTable.update(
-                where = { (CategoryTable.id eq id) and (CategoryTable.userId eq userId) }
+                where = {
+                    (CategoryTable.id eq id) and
+                        (CategoryTable.userId eq userId) and
+                        (CategoryTable.updatedAt less updatedAt)
+                }
             ) {
                 it[CategoryTable.name] = name
                 it[CategoryTable.icon] = icon

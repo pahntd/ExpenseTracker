@@ -6,8 +6,8 @@ import java.time.OffsetDateTime
 import java.time.format.DateTimeParseException
 import kotlin.uuid.Uuid
 
-fun parsePathUuid(value: String?): Uuid {
-    val raw = value ?: throw IllegalArgumentException("Missing id path parameter")
+fun parseUuid(value: String?): Uuid {
+    val raw = value ?: throw IllegalArgumentException("Missing id")
     return try {
         Uuid.parse(raw)
     } catch (e: IllegalArgumentException) {
@@ -16,7 +16,7 @@ fun parsePathUuid(value: String?): Uuid {
 }
 
 fun parseOptionalUuid(value: String?): Uuid? {
-    return value?.let { parsePathUuid(it) }
+    return value?.let { parseUuid(it) }
 }
 
 fun parseAmount(value: String): BigDecimal {

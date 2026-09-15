@@ -34,15 +34,17 @@ fun Route.categoryRoutes() {
 
                 val category = categoryService().create(
                     userId = userId,
+                    id = parseUuid(request.id),
                     name = request.name,
-                    icon = request.icon
+                    icon = request.icon,
+                    updatedAt = parseOffsetDateTime(request.updatedAt)
                 )
 
                 call.respond(HttpStatusCode.Created, category.toResponse())
             }
 
             put("/{id}") {
-                val id = parsePathUuid(call.parameters["id"])
+                val id = parseUuid(call.parameters["id"])
                 val userId = call.currentUserId()
                 val request = call.receive<UpdateCategoryRequest>()
 
@@ -50,14 +52,15 @@ fun Route.categoryRoutes() {
                     userId = userId,
                     id = id,
                     name = request.name,
-                    icon = request.icon
+                    icon = request.icon,
+                    updatedAt = parseOffsetDateTime(request.updatedAt)
                 )
 
                 call.respond(category.toResponse())
             }
 
             delete("/{id}") {
-                val id = parsePathUuid(call.parameters["id"])
+                val id = parseUuid(call.parameters["id"])
                 val userId = call.currentUserId()
 
                 categoryService().delete(userId = userId, id = id)

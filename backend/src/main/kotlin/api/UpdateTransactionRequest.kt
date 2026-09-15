@@ -8,5 +8,6 @@ data class UpdateTransactionRequest(
     val type: String,
     val categoryId: String? = null,
     val date: String,
-    val title: String? = null
+    val title: String? = null,
+    val updatedAt: String
 )

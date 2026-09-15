@@ -6,6 +6,7 @@ import com.pahntd.expensetracker.model.TransactionType
 import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.core.less
 import org.jetbrains.exposed.v1.jdbc.deleteWhere
 import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.selectAll
@@ -44,6 +45,16 @@ class ExposedTransactionRepository : TransactionRepository {
         }
     }
 
+    override fun findById(id: Uuid): Transaction? {
+        return transaction {
+            TransactionTable
+                .selectAll()
+                .where { TransactionTable.id eq id }
+                .singleOrNull()
+                ?.let { row -> row.toTransaction() }
+        }
+    }
+
     override fun findAll(userId: Uuid): List<Transaction> {
         return transaction {
             TransactionTable
@@ -63,7 +74,7 @@ class ExposedTransactionRepository : TransactionRepository {
         }
     }
 
-    override fun update(
+    override fun updateIfNewer(
         id: Uuid,
         userId: Uuid,
         amount: BigDecimal,
@@ -75,7 +86,11 @@ class ExposedTransactionRepository : TransactionRepository {
     ): Transaction? {
         return transaction {
             val updatedCount = TransactionTable.update(
-                where = { (TransactionTable.id eq id) and (TransactionTable.userId eq userId) }
+                where = {
+                    (TransactionTable.id eq id) and
+                        (TransactionTable.userId eq userId) and
+                        (TransactionTable.updatedAt less updatedAt)
+                }
             ) {
                 it[TransactionTable.amount] = amount
                 it[TransactionTable.type] = type
