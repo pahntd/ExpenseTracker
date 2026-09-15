@@ -86,7 +86,7 @@ class CategoryRepository @Inject constructor(
         } catch (e: Exception) {
             return
         }
-        categoryDao.upsertAll(categories.map { it.toEntity() })
+        categoryDao.upsertAll(categories.mapNotNull { it.toEntity() })
     }
 
 }

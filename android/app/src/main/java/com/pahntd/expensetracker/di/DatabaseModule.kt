@@ -23,7 +23,7 @@ object DatabaseModule {
             context,
             ExpenseDatabase::class.java,
             "expense_database"
-        ).addMigrations(ExpenseDatabase.MIGRATION_1_2).build()
+        ).build()
     }
 
     @Provides

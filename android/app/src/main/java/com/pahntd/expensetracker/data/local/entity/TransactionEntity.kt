@@ -28,7 +28,7 @@ data class TransactionEntity(
     val id: String = UUID.randomUUID().toString(),
     val amount: Double,
     val type: TransactionType,
-    val categoryId: String,
+    val categoryId: String?,
     val date: Long,
     val title: String?,
     val updatedAt: Long = System.currentTimeMillis(),

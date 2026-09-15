@@ -7,5 +7,6 @@ data class UpdateTransactionRequest(
     @SerializedName("type") val type: String,
     @SerializedName("categoryId") val categoryId: String?,
     @SerializedName("date") val date: String,
-    @SerializedName("title") val title: String?
+    @SerializedName("title") val title: String?,
+    @SerializedName("updatedAt") val updatedAt: String
 )
