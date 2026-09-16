@@ -14,6 +14,8 @@ object CategoryTable : Table("categories") {
 
     val icon = varchar("icon", 100)
 
+    val isDefault = bool("is_default")
+
     val createdAt = timestampWithTimeZone("created_at")
 
     val updatedAt = timestampWithTimeZone("updated_at")

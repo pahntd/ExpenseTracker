@@ -39,6 +39,7 @@ class CategoryService(
             userId = userId,
             name = trimmedName,
             icon = trimmedIcon,
+            isDefault = false,
             createdAt = OffsetDateTime.now(ZoneOffset.UTC),
             updatedAt = updatedAt
         )
@@ -62,6 +63,12 @@ class CategoryService(
         icon: String,
         updatedAt: OffsetDateTime
     ): Category {
+        val existing = categoryRepository.findById(id, userId)
+            ?: throw NoSuchElementException("Category not found")
+        if (existing.isDefault) {
+            throw IllegalStateException("Default categories cannot be modified")
+        }
+
         val trimmedName = validateName(name)
         val trimmedIcon = validateIcon(icon)
         ensureNameNotTaken(userId, trimmedName, excludingId = id)
@@ -84,8 +91,11 @@ class CategoryService(
     }
 
     fun delete(userId: Uuid, id: Uuid) {
-        categoryRepository.findById(id, userId)
+        val existing = categoryRepository.findById(id, userId)
             ?: throw NoSuchElementException("Category not found")
+        if (existing.isDefault) {
+            throw IllegalStateException("Default categories cannot be deleted")
+        }
 
         if (transactionRepository.existsByCategoryId(id, userId)) {
             throw IllegalStateException(

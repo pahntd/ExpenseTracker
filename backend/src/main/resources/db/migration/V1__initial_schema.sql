@@ -26,14 +26,16 @@ CREATE INDEX idx_refresh_tokens_user_id
 CREATE INDEX idx_refresh_tokens_token
     ON refresh_tokens(token);
 
--- id is client-generated (Android creates the UUID locally); the same id is reused
--- on the server so it can act as the sync identity. updated_at is the client's local
--- edit timestamp and drives Last Edit Wins; created_at is server-only metadata.
+-- id is client-generated for custom categories (Android creates the UUID locally) and
+-- server-generated for default categories provisioned at registration. updated_at is
+-- the client's local edit timestamp and drives Last Edit Wins; created_at is server-only
+-- metadata. Default categories (is_default = true) are immutable and never updated.
 CREATE TABLE categories (
     id UUID PRIMARY KEY,
     user_id UUID NOT NULL REFERENCES users(id),
     name VARCHAR(100) NOT NULL,
     icon VARCHAR(100) NOT NULL,
+    is_default BOOLEAN NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMPTZ NOT NULL,
 

@@ -23,6 +23,7 @@ class ExposedCategoryRepository : CategoryRepository {
                 it[userId] = category.userId
                 it[name] = category.name
                 it[icon] = category.icon
+                it[isDefault] = category.isDefault
                 it[createdAt] = category.createdAt
                 it[updatedAt] = category.updatedAt
             }
@@ -115,6 +116,7 @@ class ExposedCategoryRepository : CategoryRepository {
             userId = this[CategoryTable.userId],
             name = this[CategoryTable.name],
             icon = this[CategoryTable.icon],
+            isDefault = this[CategoryTable.isDefault],
             createdAt = this[CategoryTable.createdAt],
             updatedAt = this[CategoryTable.updatedAt]
         )

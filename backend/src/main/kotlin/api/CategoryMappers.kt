@@ -7,6 +7,7 @@ fun Category.toResponse(): CategoryResponse {
         id = id.toString(),
         name = name,
         icon = icon,
+        isDefault = isDefault,
         createdAt = createdAt.toString(),
         updatedAt = updatedAt.toString()
     )

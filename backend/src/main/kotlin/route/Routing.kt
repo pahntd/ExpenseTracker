@@ -17,6 +17,7 @@ import com.pahntd.expensetracker.auth.JwtConfig
 import com.pahntd.expensetracker.auth.RefreshTokenGenerator
 import com.pahntd.expensetracker.auth.TokenService
 import com.pahntd.expensetracker.model.RefreshToken
+import com.pahntd.expensetracker.repository.ExposedCategoryRepository
 import com.pahntd.expensetracker.repository.ExposedRefreshTokenRepository
 import com.pahntd.expensetracker.repository.ExposedUserRepository
 import com.pahntd.expensetracker.service.AuthService
@@ -72,9 +73,11 @@ fun Application.configureRouting() {
             val passwordHasher = BCryptPasswordHasher()
 
             val userRepository = ExposedUserRepository()
+            val categoryRepository = ExposedCategoryRepository()
 
             val authService = AuthService(
                 userRepository = userRepository,
+                categoryRepository = categoryRepository,
                 passwordHasher = passwordHasher
             )
 
@@ -116,8 +119,10 @@ fun Application.configureRouting() {
             val request = call.receive<LoginRequest>()
             val passwordHasher = BCryptPasswordHasher()
             val userRepository = ExposedUserRepository()
+            val categoryRepository = ExposedCategoryRepository()
             val authService = AuthService(
                 userRepository = userRepository,
+                categoryRepository = categoryRepository,
                 passwordHasher = passwordHasher
             )
             val user = authService.login(

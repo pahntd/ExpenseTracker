@@ -1,9 +1,12 @@
 package com.pahntd.expensetracker.service
 
 import com.pahntd.expensetracker.auth.PasswordHasher
+import com.pahntd.expensetracker.model.Category
 import com.pahntd.expensetracker.model.User
+import com.pahntd.expensetracker.repository.CategoryRepository
 import com.pahntd.expensetracker.repository.RefreshTokenRepository
 import com.pahntd.expensetracker.repository.UserRepository
+import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import java.util.UUID
 import java.time.Instant
 import java.time.OffsetDateTime
@@ -12,6 +15,7 @@ import kotlin.uuid.Uuid
 
 class AuthService(
     private val userRepository: UserRepository,
+    private val categoryRepository: CategoryRepository,
     private val passwordHasher: PasswordHasher,
 ) {
     fun register(
@@ -46,7 +50,25 @@ class AuthService(
             updatedAt = now
         )
 
-        return userRepository.create(user)
+        return transaction {
+            val createdUser = userRepository.create(user)
+
+            DefaultCategories.DEFINITIONS.forEach { (name, icon) ->
+                categoryRepository.create(
+                    Category(
+                        id = Uuid.random(),
+                        userId = createdUser.id,
+                        name = name,
+                        icon = icon,
+                        isDefault = true,
+                        createdAt = now,
+                        updatedAt = now
+                    )
+                )
+            }
+
+            createdUser
+        }
     }
 
     private fun isValidEmail(email: String): Boolean {

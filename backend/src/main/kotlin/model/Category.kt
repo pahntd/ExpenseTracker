@@ -8,6 +8,7 @@ data class Category(
     val userId: Uuid,
     val name: String,
     val icon: String,
+    val isDefault: Boolean,
     val createdAt: OffsetDateTime,
     val updatedAt: OffsetDateTime
 )
