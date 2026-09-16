@@ -57,9 +57,7 @@ class SettingFragment : Fragment() {
     }
 
     private fun setupClick() {
-        binding.btnDeleteAllData.setOnClickListener {
-            showAlertDialog()
-        }
+
     }
 
     private fun observeEvent() {
@@ -88,19 +86,19 @@ class SettingFragment : Fragment() {
         }
     }
 
-    private fun showAlertDialog() {
-        AlertDialog.Builder(requireContext())
-            .setTitle("Delete All Data ?")
-            .setMessage(
-                "All expenses will be deleted.\n\n" +
-                        "Categories will be reset to the default list."
-            )
-            .setNegativeButton("Cancel", null)
-            .setPositiveButton("Delete") { _, _ ->
-                viewModel.deleteAllData()
-            }
-            .show()
-    }
+//    private fun showAlertDialog() {
+//        AlertDialog.Builder(requireContext())
+//            .setTitle("Delete All Data ?")
+//            .setMessage(
+//                "All expenses will be deleted.\n\n" +
+//                        "Categories will be reset to the default list."
+//            )
+//            .setNegativeButton("Cancel", null)
+//            .setPositiveButton("Delete") { _, _ ->
+//                viewModel.deleteAllData()
+//            }
+//            .show()
+//    }
 
     private fun isDarkMode(): Boolean {
         return preferences.getBoolean(

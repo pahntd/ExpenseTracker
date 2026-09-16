@@ -17,23 +17,4 @@ class SettingViewModel @Inject constructor(
     private val _eventState = MutableSharedFlow<SettingEventState>()
     val eventState = _eventState.asSharedFlow()
 
-
-    fun deleteAllData() {
-        viewModelScope.launch {
-            try {
-                settingRepository.resetAllData()
-
-                _eventState.emit(
-                    SettingEventState.DeleteAllSuccess
-                )
-            } catch (e: Exception) {
-                _eventState.emit(
-                    SettingEventState.Error(
-                        "Failed to delete all data"
-                    )
-                )
-            }
-        }
-    }
-
 }

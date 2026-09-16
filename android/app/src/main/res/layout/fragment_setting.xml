@@ -53,33 +53,6 @@
 
         </LinearLayout>
 
-        <!-- Data -->
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="24dp"
-            android:text="Data"
-            android:textSize="16sp"
-            android:textStyle="bold" />
-
-        <FrameLayout
-            android:id="@+id/btnDeleteAllData"
-            android:layout_width="136dp"
-            android:layout_height="48dp"
-            android:layout_marginTop="8dp"
-            android:background="@drawable/bg_button_ripple">
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:gravity="center"
-                android:text="Delete All Data"
-                android:textColor="@color/red"
-                android:textSize="14sp"
-                android:textStyle="bold" />
-        </FrameLayout>
-
         <!-- About -->
 
         <TextView

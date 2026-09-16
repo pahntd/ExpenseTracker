@@ -4,7 +4,6 @@ import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.room.Transaction
 import androidx.room.TypeConverters
-import com.pahntd.expensetracker.data.local.DefaultCategories
 import com.pahntd.expensetracker.data.local.converter.SyncStatusConverter
 import com.pahntd.expensetracker.data.local.converter.TransactionTypeConverter
 import com.pahntd.expensetracker.data.local.dao.CategoryDao
@@ -26,13 +25,4 @@ abstract class ExpenseDatabase : RoomDatabase() {
     abstract fun transactionDao(): TransactionDao
 
     abstract fun categoryDao(): CategoryDao
-
-    @Transaction
-    open suspend fun resetAllData() {
-        transactionDao().deleteAll()
-        categoryDao().deleteAll()
-        categoryDao().insertAll(
-            DefaultCategories.categories
-        )
-    }
 }
