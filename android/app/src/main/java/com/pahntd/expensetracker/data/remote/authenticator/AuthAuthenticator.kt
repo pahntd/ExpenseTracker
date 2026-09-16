@@ -72,7 +72,10 @@ class AuthAuthenticator @Inject constructor(
                     null
                 }
             } catch (e: IOException) {
-                null
+                // Network failure/timeout while refreshing is not a definitive auth failure -
+                // leave the session intact so a later attempt (once connectivity returns) can
+                // still succeed, instead of clearing it like an actually-rejected refresh token.
+                return null
             }
 
             if (newAccessToken.isNullOrBlank()) {

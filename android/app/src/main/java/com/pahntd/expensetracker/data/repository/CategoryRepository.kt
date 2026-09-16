@@ -7,6 +7,8 @@ import com.pahntd.expensetracker.data.remote.api.CategoryApi
 import com.pahntd.expensetracker.data.remote.dto.CategoryResponse
 import com.pahntd.expensetracker.data.remote.dto.CreateCategoryRequest
 import com.pahntd.expensetracker.data.remote.dto.UpdateCategoryRequest
+import com.pahntd.expensetracker.data.remote.error.AppError
+import com.pahntd.expensetracker.data.remote.error.toAppError
 import com.pahntd.expensetracker.data.remote.mapper.toEntity
 import kotlinx.coroutines.flow.Flow
 import retrofit2.Response
@@ -76,17 +78,30 @@ class CategoryRepository @Inject constructor(
 
     /**
      * Pulls categories from the server and upserts them into Room. On failure, the existing
-     * local data is left untouched so the Room-backed UI keeps working offline.
+     * local data is left untouched so the Room-backed UI keeps working offline, and the
+     * classified [AppError] is returned so the caller can decide what, if anything, to do about
+     * it. Returns `null` on success.
+     *
+     * Every [CategoryResponse] must map cleanly: if any one of them fails to parse, the whole
+     * pull fails as [AppError.Unknown] rather than silently dropping the malformed record and
+     * upserting the rest, so a bad server record can never partially apply.
      */
-    suspend fun pullCategories() {
+    suspend fun pullCategories(): AppError? {
         val categories = try {
             getCategoriesFromApi()
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
-            return
+            return e.toAppError()
         }
-        categoryDao.upsertAll(categories.mapNotNull { it.toEntity() })
+
+        val entities = categories.map { response ->
+            response.toEntity() ?: return AppError.Unknown(
+                IllegalStateException("Category ${response.id} could not be mapped from the server response")
+            )
+        }
+        categoryDao.upsertAll(entities)
+        return null
     }
 
 }
