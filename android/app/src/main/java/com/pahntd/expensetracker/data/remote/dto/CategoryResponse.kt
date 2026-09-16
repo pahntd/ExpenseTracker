@@ -7,5 +7,6 @@ data class CategoryResponse(
     @SerializedName("name") val name: String,
     @SerializedName("icon") val icon: String,
     @SerializedName("createdAt") val createdAt: String,
-    @SerializedName("updatedAt") val updatedAt: String
+    @SerializedName("updatedAt") val updatedAt: String,
+    @SerializedName("isDefault") val isDefault: Boolean = false
 )

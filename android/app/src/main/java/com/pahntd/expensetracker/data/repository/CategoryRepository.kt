@@ -36,11 +36,23 @@ class CategoryRepository @Inject constructor(
         return categoryDao.insert(category)
     }
 
+    /**
+     * Updates a category, unless the persisted record is a default category. The persisted
+     * record's [CategoryEntity.isDefault] is authoritative rather than the passed-in [category],
+     * since callers may build a partial entity that doesn't carry the real flag. Returns 0 when
+     * the category is default or doesn't exist, matching the "no rows affected" contract already
+     * used for a naming conflict.
+     */
     suspend fun updateCategory(category: CategoryEntity): Int {
+        val existing = categoryDao.findById(category.id) ?: return 0
+        if (existing.isDefault) return 0
         return categoryDao.update(category)
     }
 
+    /** Deletes a category, unless the persisted record is a default category. */
     suspend fun deleteCategory(category: CategoryEntity) {
+        val existing = categoryDao.findById(category.id) ?: return
+        if (existing.isDefault) return
         categoryDao.delete(category)
     }
 
@@ -48,7 +60,10 @@ class CategoryRepository @Inject constructor(
         categoryDao.deleteAll()
     }
 
+    /** Deletes a category by id, unless the persisted record is a default category. */
     suspend fun deleteById(id: String) {
+        val existing = categoryDao.findById(id) ?: return
+        if (existing.isDefault) return
         categoryDao.deleteById(id)
     }
 

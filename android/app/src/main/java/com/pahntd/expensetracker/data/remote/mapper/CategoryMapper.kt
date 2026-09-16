@@ -19,7 +19,8 @@ fun CategoryResponse.toEntity(): CategoryEntity? {
         name = name,
         icon = icon,
         updatedAt = parsedUpdatedAt,
-        syncStatus = SyncStatus.SYNCED
+        syncStatus = SyncStatus.SYNCED,
+        isDefault = isDefault
     )
 }
 

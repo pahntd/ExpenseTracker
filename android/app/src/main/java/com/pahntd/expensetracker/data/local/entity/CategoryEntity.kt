@@ -20,4 +20,5 @@ data class CategoryEntity(
     val updatedAt: Long = System.currentTimeMillis(),
     val syncStatus: SyncStatus = SyncStatus.PENDING_CREATE,
     val deletedAt: Long? = null,
+    val isDefault: Boolean = false,
 )
