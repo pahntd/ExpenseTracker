@@ -8,14 +8,11 @@ import com.pahntd.expensetracker.data.local.entity.TransactionEntity
 import com.pahntd.expensetracker.data.local.relation.ExpenseWithCategory
 import com.pahntd.expensetracker.data.local.sync.SyncStatusPolicy
 import com.pahntd.expensetracker.data.remote.api.TransactionApi
-import com.pahntd.expensetracker.data.remote.dto.CreateTransactionRequest
 import com.pahntd.expensetracker.data.remote.dto.TransactionResponse
-import com.pahntd.expensetracker.data.remote.dto.UpdateTransactionRequest
 import com.pahntd.expensetracker.data.remote.error.AppError
 import com.pahntd.expensetracker.data.remote.error.toAppError
 import com.pahntd.expensetracker.data.remote.mapper.toEntity
 import kotlinx.coroutines.flow.Flow
-import retrofit2.Response
 import java.util.concurrent.CancellationException
 import javax.inject.Inject
 
@@ -138,18 +135,6 @@ class TransactionRepository @Inject constructor(
 
     suspend fun getTransactionsFromApi(): List<TransactionResponse> {
         return transactionApi.getTransactions()
-    }
-
-    suspend fun createTransactionOnApi(request: CreateTransactionRequest): TransactionResponse {
-        return transactionApi.createTransaction(request)
-    }
-
-    suspend fun updateTransactionOnApi(id: String, request: UpdateTransactionRequest): TransactionResponse {
-        return transactionApi.updateTransaction(id, request)
-    }
-
-    suspend fun deleteTransactionOnApi(id: String): Response<Unit> {
-        return transactionApi.deleteTransaction(id)
     }
 
     /**

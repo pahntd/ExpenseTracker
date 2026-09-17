@@ -7,13 +7,10 @@ import com.pahntd.expensetracker.data.local.relation.CategoryWithExpenseCount
 import com.pahntd.expensetracker.data.local.sync.SyncStatusPolicy
 import com.pahntd.expensetracker.data.remote.api.CategoryApi
 import com.pahntd.expensetracker.data.remote.dto.CategoryResponse
-import com.pahntd.expensetracker.data.remote.dto.CreateCategoryRequest
-import com.pahntd.expensetracker.data.remote.dto.UpdateCategoryRequest
 import com.pahntd.expensetracker.data.remote.error.AppError
 import com.pahntd.expensetracker.data.remote.error.toAppError
 import com.pahntd.expensetracker.data.remote.mapper.toEntity
 import kotlinx.coroutines.flow.Flow
-import retrofit2.Response
 import java.util.concurrent.CancellationException
 import javax.inject.Inject
 
@@ -102,18 +99,6 @@ class CategoryRepository @Inject constructor(
 
     suspend fun getCategoriesFromApi(): List<CategoryResponse> {
         return categoryApi.getCategories()
-    }
-
-    suspend fun createCategoryOnApi(request: CreateCategoryRequest): CategoryResponse {
-        return categoryApi.createCategory(request)
-    }
-
-    suspend fun updateCategoryOnApi(id: String, request: UpdateCategoryRequest): CategoryResponse {
-        return categoryApi.updateCategory(id, request)
-    }
-
-    suspend fun deleteCategoryOnApi(id: String): Response<Unit> {
-        return categoryApi.deleteCategory(id)
     }
 
     /**
