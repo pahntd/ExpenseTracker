@@ -7,6 +7,7 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Transaction
 import androidx.room.Update
+import com.pahntd.expensetracker.data.local.converter.SyncStatus
 import com.pahntd.expensetracker.data.local.entity.CategoryEntity
 import com.pahntd.expensetracker.data.local.relation.CategoryWithExpenseCount
 import kotlinx.coroutines.flow.Flow
@@ -67,6 +68,10 @@ interface CategoryDao {
 
     @Query("SELECT * FROM categories WHERE name = :name AND deletedAt IS NULL LIMIT 1")
     suspend fun findByName(name: String): CategoryEntity?
+
+    /** Reads rows pending push (create/update) to the server, for [com.pahntd.expensetracker.data.sync.SyncManager]. */
+    @Query("SELECT * FROM categories WHERE syncStatus = :status")
+    suspend fun findBySyncStatus(status: SyncStatus): List<CategoryEntity>
 
     @Query(
         """

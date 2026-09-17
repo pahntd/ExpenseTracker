@@ -7,6 +7,7 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Transaction
 import androidx.room.Update
+import com.pahntd.expensetracker.data.local.converter.SyncStatus
 import com.pahntd.expensetracker.data.local.converter.TransactionType
 import com.pahntd.expensetracker.data.local.entity.TransactionEntity
 import com.pahntd.expensetracker.data.local.relation.CategoryWithAmountSummary
@@ -60,6 +61,10 @@ interface TransactionDao {
      */
     @Query("SELECT * FROM expenses WHERE id = :id")
     suspend fun findById(id: String): TransactionEntity?
+
+    /** Reads rows pending push (create/update) to the server, for [com.pahntd.expensetracker.data.sync.SyncManager]. */
+    @Query("SELECT * FROM expenses WHERE syncStatus = :status")
+    suspend fun findBySyncStatus(status: SyncStatus): List<TransactionEntity>
 
     @Query("SELECT * FROM expenses WHERE categoryId = :categoryId AND deletedAt IS NULL ORDER BY date DESC")
     fun findByCategory(categoryId: String): Flow<List<TransactionEntity>>
