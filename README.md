@@ -7,24 +7,24 @@ Expense Tracker allows users to manage income and expenses, organize transaction
 ## Screenshots
 #### Home
 <p align="center">
-  <img src="screenshots/home.jpg" width="200"/>
-  <img src="screenshots/add_expense.jpg" width="200"/>
-  <img src="screenshots/detail.jpg" width="200"/>
-  <img src="screenshots/search.jpg" width="200"/>
+  <img src="android/screenshots/home.jpg" width="200"/>
+  <img src="android/screenshots/add_expense.jpg" width="200"/>
+  <img src="android/screenshots/detail.jpg" width="200"/>
+  <img src="android/screenshots/search.jpg" width="200"/>
 </p>
 
 #### Category
 <p align="center">
-  <img src="screenshots/category.jpg" width="200"/>
-  <img src="screenshots/add_category.jpg" width="200"/>
+  <img src="android/screenshots/category.jpg" width="200"/>
+  <img src="android/screenshots/add_category.jpg" width="200"/>
 
 </p>
 
 #### Statistics, Settings and Dark mode
 <p align="center">
-  <img src="screenshots/statistics.jpg" width="200"/>
-  <img src="screenshots/settings.jpg" width="200"/>
-  <img src="screenshots/dark.jpg" width="200"/>
+  <img src="android/screenshots/statistics.jpg" width="200"/>
+  <img src="android/screenshots/settings.jpg" width="200"/>
+  <img src="android/screenshots/dark.jpg" width="200"/>
 </p>
 
 ## Features
