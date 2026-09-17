@@ -62,9 +62,18 @@ interface TransactionDao {
     @Query("SELECT * FROM expenses WHERE id = :id")
     suspend fun findById(id: String): TransactionEntity?
 
-    /** Reads rows pending push (create/update) to the server, for [com.pahntd.expensetracker.data.sync.SyncManager]. */
+    /** Reads rows pending push (create/update/delete) to the server, for [com.pahntd.expensetracker.data.sync.SyncManager]. */
     @Query("SELECT * FROM expenses WHERE syncStatus = :status")
     suspend fun findBySyncStatus(status: SyncStatus): List<TransactionEntity>
+
+    /**
+     * Whether any transaction row still references [categoryId], regardless of [TransactionEntity.deletedAt]
+     * or [TransactionEntity.syncStatus]. A soft-deleted, still-pending-delete transaction is hidden
+     * from normal UI queries but may still exist on the server, so it still counts as a dependency
+     * for [com.pahntd.expensetracker.data.sync.SyncManager] deciding whether a category is safe to delete.
+     */
+    @Query("SELECT EXISTS(SELECT 1 FROM expenses WHERE categoryId = :categoryId)")
+    suspend fun existsByCategory(categoryId: String): Boolean
 
     @Query("SELECT * FROM expenses WHERE categoryId = :categoryId AND deletedAt IS NULL ORDER BY date DESC")
     fun findByCategory(categoryId: String): Flow<List<TransactionEntity>>

@@ -69,7 +69,7 @@ interface CategoryDao {
     @Query("SELECT * FROM categories WHERE name = :name AND deletedAt IS NULL LIMIT 1")
     suspend fun findByName(name: String): CategoryEntity?
 
-    /** Reads rows pending push (create/update) to the server, for [com.pahntd.expensetracker.data.sync.SyncManager]. */
+    /** Reads rows pending push (create/update/delete) to the server, for [com.pahntd.expensetracker.data.sync.SyncManager]. */
     @Query("SELECT * FROM categories WHERE syncStatus = :status")
     suspend fun findBySyncStatus(status: SyncStatus): List<CategoryEntity>
 

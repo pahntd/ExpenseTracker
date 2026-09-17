@@ -34,6 +34,8 @@ class SyncManager @Inject constructor(
         syncCategoryUpdates()
         syncTransactionCreates(failedCategoryCreateIds)
         syncTransactionUpdates(failedCategoryCreateIds)
+        syncTransactionDeletes()
+        syncCategoryDeletes()
     }
 
     /**
@@ -111,6 +113,51 @@ class SyncManager @Inject constructor(
             val response = transactionApi.updateTransaction(transaction.id, transaction.toUpdateRequest())
             val synced = response.toEntity() ?: return false
             transactionDao.update(synced)
+            true
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            false
+        }
+    }
+
+    /** Pushes every locally pending-delete transaction; a failed delete is left pending. */
+    private suspend fun syncTransactionDeletes() {
+        val pending = transactionDao.findBySyncStatus(SyncStatus.PENDING_DELETE)
+        pending.forEach { pushTransactionDelete(it) }
+    }
+
+    /**
+     * Pushes every locally pending-delete category that has no remaining transaction dependency.
+     * A category is skipped this pass - left `PENDING_DELETE` for a later sync - when a
+     * transaction still references it, since that transaction may still exist on the server
+     * (its own delete may not have been attempted yet, or may have just failed) and the backend
+     * enforces categories via FK + RESTRICT.
+     */
+    private suspend fun syncCategoryDeletes() {
+        val pending = categoryDao.findBySyncStatus(SyncStatus.PENDING_DELETE)
+        pending.filterNot { transactionDao.existsByCategory(it.id) }
+            .forEach { pushCategoryDelete(it) }
+    }
+
+    private suspend fun pushTransactionDelete(transaction: TransactionEntity): Boolean {
+        return try {
+            val response = transactionApi.deleteTransaction(transaction.id)
+            if (!response.isSuccessful) return false
+            transactionDao.deleteById(transaction.id)
+            true
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            false
+        }
+    }
+
+    private suspend fun pushCategoryDelete(category: CategoryEntity): Boolean {
+        return try {
+            val response = categoryApi.deleteCategory(category.id)
+            if (!response.isSuccessful) return false
+            categoryDao.deleteById(category.id)
             true
         } catch (e: CancellationException) {
             throw e
