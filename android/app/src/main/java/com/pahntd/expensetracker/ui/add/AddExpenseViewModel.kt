@@ -144,7 +144,11 @@ class AddExpenseViewModel @Inject constructor(
                 title = state.note
             )
             if (isEditMode) {
-                transactionRepository.updateExpense(transaction.copy(id = expenseId!!))
+                val updated = transactionRepository.updateExpense(transaction.copy(id = expenseId!!))
+                if (!updated) {
+                    _eventState.emit(AddExpenseEventState.Error("This transaction can no longer be edited"))
+                    return@launch
+                }
             } else {
                 transactionRepository.insertExpense(transaction)
             }

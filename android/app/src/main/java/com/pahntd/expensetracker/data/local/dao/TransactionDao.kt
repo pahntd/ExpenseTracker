@@ -50,16 +50,21 @@ interface TransactionDao {
     @Query("DELETE FROM expenses")
     suspend fun deleteAll()
 
-    @Query("SELECT * FROM expenses ORDER BY date DESC")
+    @Query("SELECT * FROM expenses WHERE deletedAt IS NULL ORDER BY date DESC")
     fun getAll(): Flow<List<TransactionEntity>>
 
+    /**
+     * Looks up a transaction regardless of its [TransactionEntity.deletedAt]/
+     * [TransactionEntity.syncStatus] state, since mutation flows need to see a pending-delete row
+     * to correctly block further edits on it. UI-facing reads should use [getAll] instead.
+     */
     @Query("SELECT * FROM expenses WHERE id = :id")
     suspend fun findById(id: String): TransactionEntity?
 
-    @Query("SELECT * FROM expenses WHERE categoryId = :categoryId ORDER BY date DESC")
+    @Query("SELECT * FROM expenses WHERE categoryId = :categoryId AND deletedAt IS NULL ORDER BY date DESC")
     fun findByCategory(categoryId: String): Flow<List<TransactionEntity>>
 
-    @Query("SELECT * FROM expenses WHERE type = :type ORDER BY date DESC")
+    @Query("SELECT * FROM expenses WHERE type = :type AND deletedAt IS NULL ORDER BY date DESC")
     fun findByType(type: TransactionType): Flow<List<TransactionEntity>>
 
     @Query(
@@ -68,8 +73,9 @@ interface TransactionDao {
         INNER JOIN categories
         ON expenses.categoryId = categories.id
         WHERE
-        categories.name LIKE '%' || :keyword || '%'
-        OR expenses.title LIKE '%'||:keyword||'%'
+        expenses.deletedAt IS NULL
+        AND (categories.name LIKE '%' || :keyword || '%'
+        OR expenses.title LIKE '%'||:keyword||'%')
         ORDER BY expenses.date DESC
     """
     )
@@ -79,6 +85,7 @@ interface TransactionDao {
         """
     SELECT * FROM expenses
     WHERE date BETWEEN :startDate AND :endDate
+    AND deletedAt IS NULL
     ORDER BY date DESC
 """
     )
@@ -91,7 +98,7 @@ interface TransactionDao {
         """
     SELECT SUM(amount)
     FROM expenses
-    WHERE type = 'INCOME'
+    WHERE type = 'INCOME' AND deletedAt IS NULL
 """
     )
     suspend fun getTotalIncome(): Double?
@@ -100,22 +107,22 @@ interface TransactionDao {
         """
     SELECT SUM(amount)
     FROM expenses
-    WHERE type = 'EXPENSE'
+    WHERE type = 'EXPENSE' AND deletedAt IS NULL
 """
     )
     suspend fun getTotalExpense(): Double?
 
     @Transaction
-    @Query("SELECT * FROM expenses ORDER BY date DESC")
+    @Query("SELECT * FROM expenses WHERE deletedAt IS NULL ORDER BY date DESC")
     fun getAllWithCategory(): Flow<List<ExpenseWithCategory>>
 
 
     @Transaction
-    @Query("SELECT * FROM expenses WHERE id = :id")
+    @Query("SELECT * FROM expenses WHERE id = :id AND deletedAt IS NULL")
     fun getExpenseWithCategoryById(id: String): Flow<ExpenseWithCategory?>
 
     @Transaction
-    @Query("SELECT * FROM expenses WHERE id = :id")
+    @Query("SELECT * FROM expenses WHERE id = :id AND deletedAt IS NULL")
     suspend fun findExpenseWithCategoryById(id: String): ExpenseWithCategory?
 
     @Query(
@@ -128,7 +135,7 @@ interface TransactionDao {
     FROM expenses
     INNER JOIN categories
         ON expenses.categoryId = categories.id
-    WHERE expenses.type = 'EXPENSE'
+    WHERE expenses.type = 'EXPENSE' AND expenses.deletedAt IS NULL
     GROUP BY categories.id
     ORDER BY totalAmount DESC
 """
@@ -145,7 +152,7 @@ interface TransactionDao {
     FROM expenses
     INNER JOIN categories
         ON expenses.categoryId = categories.id
-    WHERE expenses.type = 'INCOME'
+    WHERE expenses.type = 'INCOME' AND expenses.deletedAt IS NULL
     GROUP BY categories.id
     ORDER BY totalAmount DESC
 """

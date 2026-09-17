@@ -48,19 +48,24 @@ interface CategoryDao {
     @Query("SELECT COUNT(*) FROM categories")
     suspend fun count(): Int
 
-    @Query("SELECT EXISTS(SELECT 1 FROM categories WHERE name = :name)")
+    @Query("SELECT EXISTS(SELECT 1 FROM categories WHERE name = :name AND deletedAt IS NULL)")
     suspend fun exists(name: String): Boolean
 
     @Query("DELETE FROM categories WHERE id = :id")
     suspend fun deleteById(id: String)
 
-    @Query("SELECT * FROM categories ORDER BY name")
+    @Query("SELECT * FROM categories WHERE deletedAt IS NULL ORDER BY name")
     fun getAll(): Flow<List<CategoryEntity>>
 
+    /**
+     * Looks up a category regardless of its [CategoryEntity.deletedAt]/[CategoryEntity.syncStatus]
+     * state, since mutation flows need to see a pending-delete row to correctly block further
+     * edits on it. UI-facing reads should use [getAll] instead.
+     */
     @Query("SELECT * FROM categories WHERE id = :id")
     suspend fun findById(id: String): CategoryEntity?
 
-    @Query("SELECT * FROM categories WHERE name = :name LIMIT 1")
+    @Query("SELECT * FROM categories WHERE name = :name AND deletedAt IS NULL LIMIT 1")
     suspend fun findByName(name: String): CategoryEntity?
 
     @Query(
@@ -72,7 +77,8 @@ interface CategoryDao {
         COUNT(expenses.id) AS expenseCount
     FROM categories
     LEFT JOIN expenses
-        ON categories.id = expenses.categoryId
+        ON categories.id = expenses.categoryId AND expenses.deletedAt IS NULL
+    WHERE categories.deletedAt IS NULL
     GROUP BY categories.id
     ORDER BY categories.name ASC
 """

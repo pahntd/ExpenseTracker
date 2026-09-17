@@ -1,8 +1,10 @@
 package com.pahntd.expensetracker.data.repository
 
+import com.pahntd.expensetracker.data.local.converter.SyncStatus
 import com.pahntd.expensetracker.data.local.dao.CategoryDao
 import com.pahntd.expensetracker.data.local.entity.CategoryEntity
 import com.pahntd.expensetracker.data.local.relation.CategoryWithExpenseCount
+import com.pahntd.expensetracker.data.local.sync.SyncStatusPolicy
 import com.pahntd.expensetracker.data.remote.api.CategoryApi
 import com.pahntd.expensetracker.data.remote.dto.CategoryResponse
 import com.pahntd.expensetracker.data.remote.dto.CreateCategoryRequest
@@ -32,39 +34,62 @@ class CategoryRepository @Inject constructor(
         return categoryDao.findByName(name)
     }
 
+    /**
+     * Inserts a new local category. Sync metadata is always stamped here rather than trusted from
+     * the passed-in [category], so a freshly created row is always [SyncStatus.PENDING_CREATE]
+     * regardless of when/how the caller built the entity.
+     */
     suspend fun insertCategory(category: CategoryEntity): Long {
-        return categoryDao.insert(category)
+        return categoryDao.insert(
+            category.copy(
+                updatedAt = System.currentTimeMillis(),
+                syncStatus = SyncStatus.PENDING_CREATE,
+                deletedAt = null
+            )
+        )
     }
 
     /**
-     * Updates a category, unless the persisted record is a default category. The persisted
-     * record's [CategoryEntity.isDefault] is authoritative rather than the passed-in [category],
-     * since callers may build a partial entity that doesn't carry the real flag. Returns 0 when
-     * the category is default or doesn't exist, matching the "no rows affected" contract already
-     * used for a naming conflict.
+     * Updates a category's business fields, deriving the correct [SyncStatus] from the persisted
+     * record rather than the passed-in [category]. Returns 0 (no rows affected) when the category
+     * doesn't exist, is a default category, or is pending delete - all cases where a local edit
+     * must not go through.
      */
     suspend fun updateCategory(category: CategoryEntity): Int {
         val existing = categoryDao.findById(category.id) ?: return 0
         if (existing.isDefault) return 0
-        return categoryDao.update(category)
+        if (!SyncStatusPolicy.canMutate(existing.syncStatus)) return 0
+        return categoryDao.update(
+            existing.copy(
+                name = category.name,
+                icon = category.icon,
+                updatedAt = System.currentTimeMillis(),
+                syncStatus = SyncStatusPolicy.onLocalUpdate(existing.syncStatus)
+            )
+        )
     }
 
-    /** Deletes a category, unless the persisted record is a default category. */
-    suspend fun deleteCategory(category: CategoryEntity) {
-        val existing = categoryDao.findById(category.id) ?: return
-        if (existing.isDefault) return
-        categoryDao.delete(category)
-    }
-
-    suspend fun deleteAllCategories() {
-        categoryDao.deleteAll()
-    }
-
-    /** Deletes a category by id, unless the persisted record is a default category. */
+    /**
+     * Deletes a category by id, unless it's a default category or already pending delete. A row
+     * that was never synced ([SyncStatus.PENDING_CREATE]) is removed outright since the server has
+     * never seen it; otherwise it's logically deleted so the pending delete can sync later.
+     */
     suspend fun deleteById(id: String) {
         val existing = categoryDao.findById(id) ?: return
         if (existing.isDefault) return
-        categoryDao.deleteById(id)
+        if (!SyncStatusPolicy.canMutate(existing.syncStatus)) return
+        if (SyncStatusPolicy.shouldHardDeleteLocally(existing.syncStatus)) {
+            categoryDao.deleteById(id)
+        } else {
+            val now = System.currentTimeMillis()
+            categoryDao.update(
+                existing.copy(
+                    deletedAt = now,
+                    updatedAt = now,
+                    syncStatus = SyncStatus.PENDING_DELETE
+                )
+            )
+        }
     }
 
     suspend fun countCategories(): Int {
