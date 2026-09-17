@@ -73,6 +73,24 @@ interface CategoryDao {
     @Query("SELECT * FROM categories WHERE syncStatus = :status")
     suspend fun findBySyncStatus(status: SyncStatus): List<CategoryEntity>
 
+    /**
+     * Applies a server response only if the row is still exactly the state
+     * ([expectedUpdatedAt]/[expectedSyncStatus]) that was sent to the server, so a response for an
+     * in-flight request can never overwrite a newer local mutation that happened while it was
+     * running. Returns whether [entity] was applied.
+     */
+    @Transaction
+    suspend fun applyIfUnchanged(
+        entity: CategoryEntity,
+        expectedUpdatedAt: Long,
+        expectedSyncStatus: SyncStatus
+    ): Boolean {
+        val current = findById(entity.id) ?: return false
+        if (current.updatedAt != expectedUpdatedAt || current.syncStatus != expectedSyncStatus) return false
+        update(entity)
+        return true
+    }
+
     @Query(
         """
     SELECT
