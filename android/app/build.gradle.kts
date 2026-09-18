@@ -92,6 +92,10 @@ dependencies {
     implementation(libs.google.hilt.android)
     kapt(libs.google.hilt.compiler)
     implementation(libs.androidx.hilt.navigation)
+    // WorkManager (+ Hilt integration)
+    implementation(libs.androidx.work.runtime)
+    implementation(libs.androidx.hilt.work)
+    kapt(libs.androidx.hilt.compiler)
     // Network
     implementation(libs.retrofit)
     implementation(libs.retrofit.converter.gson)

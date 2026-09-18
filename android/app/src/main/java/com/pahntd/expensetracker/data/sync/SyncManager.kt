@@ -49,13 +49,32 @@ class SyncManager @Inject constructor(
     private val transactionApi: TransactionApi
 ) {
 
-    suspend fun sync(trigger: SyncTrigger) {
+    /**
+     * Runs one push pass and reports whether the app can consider itself caught up
+     * ([SyncResult.Success]) or whether `PENDING_*` work remains for a later pass
+     * ([SyncResult.Retry]). This is decided from Room's state *after* the pass, not from whether
+     * any individual push failed - a row that failed is left `PENDING_*` by the push functions
+     * above, and a row that succeeded is already `SYNCED`/deleted, so re-reading the pending
+     * counts naturally captures partial failure without the pass-through result plumbing that
+     * threading per-record outcomes back up here would require.
+     */
+    suspend fun sync(trigger: SyncTrigger): SyncResult {
         val failedCategoryCreateIds = syncCategoryCreates()
         syncCategoryUpdates()
         syncTransactionCreates(failedCategoryCreateIds)
         syncTransactionUpdates(failedCategoryCreateIds)
         syncTransactionDeletes()
         syncCategoryDeletes()
+        return if (hasPendingWork()) SyncResult.Retry else SyncResult.Success
+    }
+
+    private suspend fun hasPendingWork(): Boolean {
+        return SyncStatus.entries
+            .filter { it != SyncStatus.SYNCED }
+            .any { status ->
+                categoryDao.findBySyncStatus(status).isNotEmpty() ||
+                    transactionDao.findBySyncStatus(status).isNotEmpty()
+            }
     }
 
     /**
