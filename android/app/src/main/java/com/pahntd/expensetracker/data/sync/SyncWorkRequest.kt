@@ -1,10 +1,20 @@
 package com.pahntd.expensetracker.data.sync
 
+import androidx.work.BackoffPolicy
 import androidx.work.Constraints
 import androidx.work.Data
 import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequest
 import androidx.work.OneTimeWorkRequestBuilder
+import java.util.concurrent.TimeUnit
+
+/**
+ * Initial delay before WorkManager's first retry of a `Result.retry()`'d [SyncWorker] run, then
+ * doubled ([BackoffPolicy.EXPONENTIAL]) on each subsequent retry of the same [SyncScheduler.UNIQUE_SYNC_WORK_NAME]
+ * unique work. Retry timing is entirely WorkManager's responsibility from here - [SyncManager]/
+ * [SyncWorker] never sleep, delay, or loop themselves.
+ */
+private const val SYNC_BACKOFF_DELAY_SECONDS = 30L
 
 /**
  * Builds the one-off [SyncWorker] request for [trigger], constrained to [NetworkType.CONNECTED]
@@ -31,5 +41,6 @@ fun syncWorkRequest(trigger: SyncTrigger): OneTimeWorkRequest {
     return OneTimeWorkRequestBuilder<SyncWorker>()
         .setConstraints(constraints)
         .setInputData(inputData)
+        .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, SYNC_BACKOFF_DELAY_SECONDS, TimeUnit.SECONDS)
         .build()
 }

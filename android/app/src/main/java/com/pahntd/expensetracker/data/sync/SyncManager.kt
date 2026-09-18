@@ -9,6 +9,7 @@ import com.pahntd.expensetracker.data.remote.api.CategoryApi
 import com.pahntd.expensetracker.data.remote.api.TransactionApi
 import com.pahntd.expensetracker.data.remote.dto.CategoryResponse
 import com.pahntd.expensetracker.data.remote.dto.TransactionResponse
+import com.pahntd.expensetracker.data.remote.error.toAppError
 import com.pahntd.expensetracker.data.remote.mapper.toCreateRequest
 import com.pahntd.expensetracker.data.remote.mapper.toEntity
 import com.pahntd.expensetracker.data.remote.mapper.toUpdateRequest
@@ -50,24 +51,34 @@ class SyncManager @Inject constructor(
 ) {
 
     /**
-     * Runs one push pass and reports whether the app can consider itself caught up
-     * ([SyncResult.Success]) or whether `PENDING_*` work remains for a later pass
-     * ([SyncResult.Retry]). This is decided from Room's state *after* the pass, not from whether
-     * any individual push failed - a row that failed is left `PENDING_*` by the push functions
-     * above, and a row that succeeded is already `SYNCED`/deleted, so re-reading the pending
-     * counts naturally captures partial failure without the pass-through result plumbing that
-     * threading per-record outcomes back up here would require.
+     * Runs one push pass and reports whether this pass is caught up ([SyncResult.Success]) or hit
+     * at least one [PushResult.RetryableFailure] worth an automatic WorkManager retry
+     * ([SyncResult.Retry]). This is a different question from whether `PENDING_*` rows remain in
+     * Room afterwards ([hasPendingWork]): a row can stay `PENDING_*` because of a
+     * [PushResult.NonRetryableFailure] (e.g. a 400 validation error) or a skipped FK dependency,
+     * neither of which repeating the identical request would fix - those are left for a future
+     * explicit trigger, not chased by WorkManager's backoff. Every eligible record is still
+     * attempted regardless of what happened to any other record in the same pass.
      */
     suspend fun sync(trigger: SyncTrigger): SyncResult {
-        val failedCategoryCreateIds = syncCategoryCreates()
-        syncCategoryUpdates()
-        syncTransactionCreates(failedCategoryCreateIds)
-        syncTransactionUpdates(failedCategoryCreateIds)
-        syncTransactionDeletes()
-        syncCategoryDeletes()
-        return if (hasPendingWork()) SyncResult.Retry else SyncResult.Success
+        val categoryCreates = syncCategoryCreates()
+        val categoryUpdateResults = syncCategoryUpdates()
+        val transactionCreateResults = syncTransactionCreates(categoryCreates.failedIds)
+        val transactionUpdateResults = syncTransactionUpdates(categoryCreates.failedIds)
+        val transactionDeleteResults = syncTransactionDeletes()
+        val categoryDeleteResults = syncCategoryDeletes()
+
+        val allResults = categoryCreates.results + categoryUpdateResults + transactionCreateResults +
+            transactionUpdateResults + transactionDeleteResults + categoryDeleteResults
+
+        return if (allResults.any { it is PushResult.RetryableFailure }) {
+            SyncResult.Retry
+        } else {
+            SyncResult.Success
+        }
     }
 
+    /** Diagnostic only - not used to decide [SyncResult], see [sync]. */
     private suspend fun hasPendingWork(): Boolean {
         return SyncStatus.entries
             .filter { it != SyncStatus.SYNCED }
@@ -77,47 +88,59 @@ class SyncManager @Inject constructor(
             }
     }
 
+    /** Outcome of pushing every locally pending-create category for one [sync] pass. */
+    private data class CategoryCreatePassResult(val results: List<PushResult>, val failedIds: Set<String>)
+
+    /** Outcome of a single category-create push: its retry classification and whether the server is now guaranteed to have it. */
+    private data class CreatePushOutcome(val result: PushResult, val confirmedOnServer: Boolean)
+
     /**
-     * Pushes every locally pending-create category. Returns the ids of the ones that failed to
-     * sync, i.e. are still not guaranteed to exist on the server, so transaction pushes can skip
-     * anything that depends on them.
+     * Pushes every locally pending-create category. [CategoryCreatePassResult.failedIds] are the
+     * ones not guaranteed to exist on the server, so transaction pushes can skip anything that
+     * depends on them - regardless of whether the failure was retryable or not, since either way
+     * the dependency isn't safely there yet (see [isEligibleForPush]).
      */
-    private suspend fun syncCategoryCreates(): Set<String> {
+    private suspend fun syncCategoryCreates(): CategoryCreatePassResult {
         val pending = categoryDao.findBySyncStatus(SyncStatus.PENDING_CREATE)
-        return pending.filterNot { pushCategoryCreate(it) }.map { it.id }.toSet()
+        val outcomes = pending.map { category -> category.id to pushCategoryCreate(category) }
+        val failedIds = outcomes.filterNot { (_, outcome) -> outcome.confirmedOnServer }
+            .map { (id, _) -> id }
+            .toSet()
+        return CategoryCreatePassResult(outcomes.map { (_, outcome) -> outcome.result }, failedIds)
     }
 
-    private suspend fun syncCategoryUpdates() {
+    private suspend fun syncCategoryUpdates(): List<PushResult> {
         val pending = categoryDao.findBySyncStatus(SyncStatus.PENDING_UPDATE)
-        pending.forEach { pushCategoryUpdate(it) }
+        return pending.map { pushCategoryUpdate(it) }
     }
 
-    private suspend fun syncTransactionCreates(failedCategoryCreateIds: Set<String>) {
+    private suspend fun syncTransactionCreates(failedCategoryCreateIds: Set<String>): List<PushResult> {
         val pending = transactionDao.findBySyncStatus(SyncStatus.PENDING_CREATE)
-        pending.filter { isEligibleForPush(it, failedCategoryCreateIds) }
-            .forEach { pushTransactionCreate(it) }
+        return pending.filter { isEligibleForPush(it, failedCategoryCreateIds) }
+            .map { pushTransactionCreate(it) }
     }
 
-    private suspend fun syncTransactionUpdates(failedCategoryCreateIds: Set<String>) {
+    private suspend fun syncTransactionUpdates(failedCategoryCreateIds: Set<String>): List<PushResult> {
         val pending = transactionDao.findBySyncStatus(SyncStatus.PENDING_UPDATE)
-        pending.filter { isEligibleForPush(it, failedCategoryCreateIds) }
-            .forEach { pushTransactionUpdate(it) }
+        return pending.filter { isEligibleForPush(it, failedCategoryCreateIds) }
+            .map { pushTransactionUpdate(it) }
     }
 
     /**
      * A create request must fully succeed and map to an entity, or the local row is left pending;
-     * a per-record failure never aborts the rest of the sync pass. Returns whether the server is
-     * now guaranteed to have this category - true whenever the POST itself succeeded, regardless
-     * of whether the response could be written straight into Room (see [applyCategoryCreateResponse]).
+     * a per-record failure never aborts the rest of the sync pass. [CreatePushOutcome.confirmedOnServer]
+     * is true whenever the POST itself succeeded, regardless of whether the response could be
+     * written straight into Room (see [applyCategoryCreateResponse]) - it drives dependency
+     * skipping, not retry classification.
      */
-    private suspend fun pushCategoryCreate(category: CategoryEntity): Boolean {
+    private suspend fun pushCategoryCreate(category: CategoryEntity): CreatePushOutcome {
         return try {
             val response = categoryApi.createCategory(category.toCreateRequest())
             applyCategoryCreateResponse(category, response)
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
-            false
+            CreatePushOutcome(e.toAppError().toPushResult(), confirmedOnServer = false)
         }
     }
 
@@ -134,21 +157,27 @@ class SyncManager @Inject constructor(
      *
      * Either way the POST/retry proves the server already has this id (no new UUID is ever
      * generated here), so rather than dropping the response, the latest local state is immediately
-     * pushed as a follow-up PUT. A further mutation racing that PUT is left for the next sync pass
-     * rather than chased again here.
+     * pushed as a follow-up PUT - its [PushResult] is propagated as this create's own result, since
+     * it's the actual network attempt whose outcome matters for retry purposes. A further mutation
+     * racing that PUT is left for the next sync pass rather than chased again here.
      */
-    private suspend fun applyCategoryCreateResponse(snapshot: CategoryEntity, response: CategoryResponse): Boolean {
-        val synced = response.toEntity() ?: return false
+    private suspend fun applyCategoryCreateResponse(snapshot: CategoryEntity, response: CategoryResponse): CreatePushOutcome {
+        val synced = response.toEntity()
+            ?: return CreatePushOutcome(PushResult.NonRetryableFailure, confirmedOnServer = false)
         val responseIsStale = synced.updatedAt < snapshot.updatedAt
         if (!responseIsStale && categoryDao.applyIfUnchanged(synced, snapshot.updatedAt, snapshot.syncStatus)) {
-            return true
+            return CreatePushOutcome(PushResult.Success, confirmedOnServer = true)
         }
 
-        val current = categoryDao.findById(snapshot.id)
-            ?: return compensateCategoryCreateWithDelete(synced)
-        if (current.syncStatus == SyncStatus.PENDING_DELETE) return false
-        pushCategoryUpdate(current)
-        return true
+        val current = categoryDao.findById(snapshot.id) ?: run {
+            val compensateResult = compensateCategoryCreateWithDelete(synced)
+            return CreatePushOutcome(compensateResult, confirmedOnServer = compensateResult is PushResult.Success)
+        }
+        if (current.syncStatus == SyncStatus.PENDING_DELETE) {
+            return CreatePushOutcome(PushResult.NonRetryableFailure, confirmedOnServer = false)
+        }
+        val updateResult = pushCategoryUpdate(current)
+        return CreatePushOutcome(updateResult, confirmedOnServer = true)
     }
 
     /**
@@ -160,89 +189,102 @@ class SyncManager @Inject constructor(
      * normal `deletedAt IS NULL` UI queries while letting Part 3's delete phase retry it on a later
      * sync pass - an in-memory failure alone wouldn't survive process death, but this Room row does.
      */
-    private suspend fun compensateCategoryCreateWithDelete(serverEntity: CategoryEntity): Boolean {
+    private suspend fun compensateCategoryCreateWithDelete(serverEntity: CategoryEntity): PushResult {
         return try {
             val response = categoryApi.deleteCategory(serverEntity.id)
-            if (response.isSuccessful) return true
+            if (response.isSuccessful) return PushResult.Success
             categoryDao.insert(serverEntity.copy(syncStatus = SyncStatus.PENDING_DELETE, deletedAt = System.currentTimeMillis()))
-            false
+            response.toAppError().toPushResult()
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
             categoryDao.insert(serverEntity.copy(syncStatus = SyncStatus.PENDING_DELETE, deletedAt = System.currentTimeMillis()))
-            false
+            e.toAppError().toPushResult()
         }
     }
 
-    private suspend fun pushCategoryUpdate(category: CategoryEntity): Boolean {
+    /**
+     * A [PushResult.RetryableFailure]/[PushResult.NonRetryableFailure] here is never surfaced by a
+     * failed HTTP call alone: when [categoryDao.applyIfUnchanged] declines to write because a newer
+     * local edit raced ahead of this response, the push itself still succeeded server-side, so
+     * that race is reported as [PushResult.Success] - the freshly-edited row will be picked up as
+     * its own pending row on a later pass.
+     */
+    private suspend fun pushCategoryUpdate(category: CategoryEntity): PushResult {
         return try {
             val response = categoryApi.updateCategory(category.id, category.toUpdateRequest())
-            val synced = response.toEntity() ?: return false
+            val synced = response.toEntity() ?: return PushResult.NonRetryableFailure
             categoryDao.applyIfUnchanged(synced, category.updatedAt, category.syncStatus)
+            PushResult.Success
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
-            false
+            e.toAppError().toPushResult()
         }
     }
 
-    private suspend fun pushTransactionCreate(transaction: TransactionEntity): Boolean {
+    private suspend fun pushTransactionCreate(transaction: TransactionEntity): PushResult {
         return try {
             val response = transactionApi.createTransaction(transaction.toCreateRequest())
             applyTransactionCreateResponse(transaction, response)
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
-            false
+            e.toAppError().toPushResult()
         }
     }
 
-    /** Same stale-response, hard-delete-compensation and follow-up-PUT handling as [applyCategoryCreateResponse], for transactions. */
-    private suspend fun applyTransactionCreateResponse(snapshot: TransactionEntity, response: TransactionResponse): Boolean {
-        val synced = response.toEntity() ?: return false
+    /**
+     * Same stale-response, hard-delete-compensation and follow-up-PUT handling as
+     * [applyCategoryCreateResponse], for transactions. No `confirmedOnServer` tracking is needed
+     * here - nothing in this app depends on a transaction the way transactions depend on categories.
+     */
+    private suspend fun applyTransactionCreateResponse(snapshot: TransactionEntity, response: TransactionResponse): PushResult {
+        val synced = response.toEntity() ?: return PushResult.NonRetryableFailure
         val responseIsStale = synced.updatedAt < snapshot.updatedAt
         if (!responseIsStale && transactionDao.applyIfUnchanged(synced, snapshot.updatedAt, snapshot.syncStatus)) {
-            return true
+            return PushResult.Success
         }
 
         val current = transactionDao.findById(snapshot.id)
             ?: return compensateTransactionCreateWithDelete(synced)
-        if (current.syncStatus == SyncStatus.PENDING_DELETE) return false
-        pushTransactionUpdate(current)
-        return true
+        if (current.syncStatus == SyncStatus.PENDING_DELETE) return PushResult.NonRetryableFailure
+        return pushTransactionUpdate(current)
     }
 
     /** Same hard-delete compensation as [compensateCategoryCreateWithDelete], for transactions. */
-    private suspend fun compensateTransactionCreateWithDelete(serverEntity: TransactionEntity): Boolean {
+    private suspend fun compensateTransactionCreateWithDelete(serverEntity: TransactionEntity): PushResult {
         return try {
             val response = transactionApi.deleteTransaction(serverEntity.id)
-            if (response.isSuccessful) return true
+            if (response.isSuccessful) return PushResult.Success
             transactionDao.insert(serverEntity.copy(syncStatus = SyncStatus.PENDING_DELETE, deletedAt = System.currentTimeMillis()))
-            false
+            response.toAppError().toPushResult()
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
             transactionDao.insert(serverEntity.copy(syncStatus = SyncStatus.PENDING_DELETE, deletedAt = System.currentTimeMillis()))
-            false
+            e.toAppError().toPushResult()
         }
     }
 
-    private suspend fun pushTransactionUpdate(transaction: TransactionEntity): Boolean {
+    /** Same race handling as [pushCategoryUpdate], for transactions. */
+    private suspend fun pushTransactionUpdate(transaction: TransactionEntity): PushResult {
         return try {
             val response = transactionApi.updateTransaction(transaction.id, transaction.toUpdateRequest())
-            val synced = response.toEntity() ?: return false
+            val synced = response.toEntity() ?: return PushResult.NonRetryableFailure
             transactionDao.applyIfUnchanged(synced, transaction.updatedAt, transaction.syncStatus)
+            PushResult.Success
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
-            false
+            e.toAppError().toPushResult()
         }
     }
 
     /** Pushes every locally pending-delete transaction; a failed delete is left pending. */
-    private suspend fun syncTransactionDeletes() {
+    private suspend fun syncTransactionDeletes(): List<PushResult> {
         val pending = transactionDao.findBySyncStatus(SyncStatus.PENDING_DELETE)
-        pending.forEach { pushTransactionDelete(it) }
+        return pending.map { pushTransactionDelete(it) }
     }
 
     /**
@@ -252,35 +294,35 @@ class SyncManager @Inject constructor(
      * (its own delete may not have been attempted yet, or may have just failed) and the backend
      * enforces categories via FK + RESTRICT.
      */
-    private suspend fun syncCategoryDeletes() {
+    private suspend fun syncCategoryDeletes(): List<PushResult> {
         val pending = categoryDao.findBySyncStatus(SyncStatus.PENDING_DELETE)
-        pending.filterNot { transactionDao.existsByCategory(it.id) }
-            .forEach { pushCategoryDelete(it) }
+        return pending.filterNot { transactionDao.existsByCategory(it.id) }
+            .map { pushCategoryDelete(it) }
     }
 
-    private suspend fun pushTransactionDelete(transaction: TransactionEntity): Boolean {
+    private suspend fun pushTransactionDelete(transaction: TransactionEntity): PushResult {
         return try {
             val response = transactionApi.deleteTransaction(transaction.id)
-            if (!response.isSuccessful) return false
+            if (!response.isSuccessful) return response.toAppError().toPushResult()
             transactionDao.deleteById(transaction.id)
-            true
+            PushResult.Success
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
-            false
+            e.toAppError().toPushResult()
         }
     }
 
-    private suspend fun pushCategoryDelete(category: CategoryEntity): Boolean {
+    private suspend fun pushCategoryDelete(category: CategoryEntity): PushResult {
         return try {
             val response = categoryApi.deleteCategory(category.id)
-            if (!response.isSuccessful) return false
+            if (!response.isSuccessful) return response.toAppError().toPushResult()
             categoryDao.deleteById(category.id)
-            true
+            PushResult.Success
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
-            false
+            e.toAppError().toPushResult()
         }
     }
 }
