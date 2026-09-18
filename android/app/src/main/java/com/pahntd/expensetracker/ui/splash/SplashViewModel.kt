@@ -7,6 +7,8 @@ import com.pahntd.expensetracker.data.auth.RefreshResult
 import com.pahntd.expensetracker.data.auth.session.SessionManager
 import com.pahntd.expensetracker.data.network.NetworkMonitor
 import com.pahntd.expensetracker.data.network.NetworkState
+import com.pahntd.expensetracker.data.sync.SyncScheduler
+import com.pahntd.expensetracker.data.sync.SyncTrigger
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -26,12 +28,18 @@ import javax.inject.Inject
  *  session exists, online, refresh fails due to network/timeout/unknown error -> keep session -> [SplashDestination.Home]
  *
  * All persistence goes through [SessionManager]; this class never touches DataStore directly.
+ *
+ * Every path that lands on [SplashDestination.Home] also requests [SyncTrigger.STARTUP] via
+ * [syncScheduler] - this only schedules background work (subject to WorkManager's own
+ * `NetworkType.CONNECTED` constraint), it never delays navigation. Home continues to render from
+ * Room immediately; sync updates it later, in the background.
  */
 @HiltViewModel
 class SplashViewModel @Inject constructor(
     private val sessionManager: SessionManager,
     private val authRepository: AuthRepository,
     private val networkMonitor: NetworkMonitor,
+    private val syncScheduler: SyncScheduler,
 ) : ViewModel() {
 
     private val _destination = MutableStateFlow<SplashDestination?>(null)
@@ -57,7 +65,7 @@ class SplashViewModel @Inject constructor(
                 if (networkMonitor.networkState.value == NetworkState.OFFLINE) {
                     // No connectivity to validate the session against — trust what's stored
                     // locally rather than forcing the user to log in again.
-                    _destination.value = SplashDestination.Home
+                    navigateHome()
                     return@launch
                 }
 
@@ -65,7 +73,7 @@ class SplashViewModel @Inject constructor(
                     is RefreshResult.Success -> {
                         // No refresh-token rotation: only the access token changes.
                         sessionManager.updateAccessToken(result.response.accessToken)
-                        _destination.value = SplashDestination.Home
+                        navigateHome()
                     }
                     // Backend definitively rejected the refresh token: it's unrecoverable, so
                     // there's no point keeping the session around.
@@ -78,7 +86,7 @@ class SplashViewModel @Inject constructor(
                     // the user in with what's cached locally.
                     RefreshResult.NetworkError,
                     RefreshResult.UnknownError -> {
-                        _destination.value = SplashDestination.Home
+                        navigateHome()
                     }
                 }
             } catch (e: CancellationException) {
@@ -88,5 +96,15 @@ class SplashViewModel @Inject constructor(
                 _destination.value = SplashDestination.Login
             }
         }
+    }
+
+    /**
+     * Every path to Home has a session worth syncing - request [SyncTrigger.STARTUP] before
+     * navigating. [SyncScheduler.enqueueSync] only enqueues WorkManager work and returns
+     * immediately; it never blocks this navigation decision.
+     */
+    private fun navigateHome() {
+        syncScheduler.enqueueSync(SyncTrigger.STARTUP)
+        _destination.value = SplashDestination.Home
     }
 }

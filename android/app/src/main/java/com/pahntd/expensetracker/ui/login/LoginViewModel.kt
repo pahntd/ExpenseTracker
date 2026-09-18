@@ -5,6 +5,8 @@ import androidx.lifecycle.viewModelScope
 import com.pahntd.expensetracker.data.auth.AuthRepository
 import com.pahntd.expensetracker.data.auth.LoginResult
 import com.pahntd.expensetracker.data.auth.session.SessionManager
+import com.pahntd.expensetracker.data.sync.SyncScheduler
+import com.pahntd.expensetracker.data.sync.SyncTrigger
 import com.pahntd.expensetracker.utils.AuthValidator
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -19,7 +21,8 @@ import javax.inject.Inject
 @HiltViewModel
 class LoginViewModel @Inject constructor(
     private val authRepository: AuthRepository,
-    private val sessionManager: SessionManager
+    private val sessionManager: SessionManager,
+    private val syncScheduler: SyncScheduler
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(LoginUiState())
@@ -82,6 +85,9 @@ class LoginViewModel @Inject constructor(
                                 accessToken = response.accessToken,
                                 refreshToken = response.refreshToken
                             )
+                            // Fire-and-forget: enqueueSync only schedules background work, it
+                            // never blocks the login flow on the sync itself.
+                            syncScheduler.enqueueSync(SyncTrigger.LOGIN)
                             _eventState.emit(LoginEvent.Success(response))
                         } catch (e: CancellationException) {
                             throw e
