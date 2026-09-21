@@ -1,5 +1,9 @@
 package com.pahntd.expensetracker.data.sync
 
+import androidx.room.withTransaction
+import com.pahntd.expensetracker.data.local.dao.CategoryDao
+import com.pahntd.expensetracker.data.local.dao.TransactionDao
+import com.pahntd.expensetracker.data.local.database.ExpenseDatabase
 import com.pahntd.expensetracker.data.local.entity.CategoryEntity
 import com.pahntd.expensetracker.data.local.entity.TransactionEntity
 import com.pahntd.expensetracker.data.remote.api.CategoryApi
@@ -12,18 +16,56 @@ import kotlinx.coroutines.coroutineScope
 import javax.inject.Inject
 
 /**
- * Fetches one complete server snapshot - every category and every transaction - and maps it to
- * Room entities, without writing anything to Room or merging it against local state (Merge/Room
- * integration are handled elsewhere). Categories and transactions are fetched concurrently since
- * neither depends on the other's response; either request failing, or any single item failing to
- * map, invalidates the whole snapshot - there is no partial [PullResult.Success].
+ * Fetches one complete server snapshot - every category and every transaction - and merges it
+ * into Room per entity (see [decideMergeAction] for the rules), so pulled server state can never
+ * clobber an unsynced local change or resurrect something the user deleted. Categories and
+ * transactions are fetched concurrently since neither depends on the other's response; either
+ * request failing, or any single item failing to map, invalidates the whole snapshot - nothing is
+ * merged or persisted unless both resources come back valid (there is no partial
+ * [PullResult.Success] and no partial merge).
+ *
+ * Not called from [SyncManager] yet - orchestrating push and pull together is separate work.
  */
 class PullManager @Inject constructor(
     private val categoryApi: CategoryApi,
-    private val transactionApi: TransactionApi
+    private val transactionApi: TransactionApi,
+    private val categoryDao: CategoryDao,
+    private val transactionDao: TransactionDao,
+    private val database: ExpenseDatabase
 ) {
 
-    suspend fun pull(): PullResult = coroutineScope {
+    /**
+     * Fetches the server snapshot and, only on [PullResult.Success], merges and persists it. The
+     * merge runs inside a single Room transaction ([mergeSnapshot]) so a crash or cancellation
+     * partway through can never leave categories and transactions reconciled against different
+     * points in time.
+     */
+    suspend fun pull(): PullResult {
+        val snapshot = fetchSnapshot()
+
+        if (snapshot is PullResult.Success) {
+            persistSnapshot(snapshot)
+        }
+
+        return snapshot
+    }
+
+    private suspend fun persistSnapshot(snapshot: PullResult.Success) {
+        database.withTransaction {
+            mergeSnapshot(
+                categoryDao = categoryDao,
+                transactionDao = transactionDao,
+                serverCategories = snapshot.categories,
+                serverTransactions = snapshot.transactions
+            )
+        }
+    }
+
+    /**
+     * The fetch-and-map half of [pull], kept separate (and internal) so it can be exercised
+     * without touching Room: it has no persistence side effects of its own.
+     */
+    internal suspend fun fetchSnapshot(): PullResult = coroutineScope {
         val categoriesDeferred = async { fetchCategories() }
         val transactionsDeferred = async { fetchTransactions() }
         combine(categoriesDeferred.await(), transactionsDeferred.await())

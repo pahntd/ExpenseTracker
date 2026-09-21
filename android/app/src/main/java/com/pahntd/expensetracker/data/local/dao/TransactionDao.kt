@@ -55,6 +55,15 @@ interface TransactionDao {
     fun getAll(): Flow<List<TransactionEntity>>
 
     /**
+     * Reads every transaction row regardless of [TransactionEntity.deletedAt]/
+     * [TransactionEntity.syncStatus], for [com.pahntd.expensetracker.data.sync.PullManager]'s
+     * merge, which must see local `PENDING_DELETE` tombstones to reconcile them against the server
+     * snapshot. UI-facing reads should use [getAll] instead.
+     */
+    @Query("SELECT * FROM expenses")
+    suspend fun findAll(): List<TransactionEntity>
+
+    /**
      * Looks up a transaction regardless of its [TransactionEntity.deletedAt]/
      * [TransactionEntity.syncStatus] state, since mutation flows need to see a pending-delete row
      * to correctly block further edits on it. UI-facing reads should use [getAll] instead.

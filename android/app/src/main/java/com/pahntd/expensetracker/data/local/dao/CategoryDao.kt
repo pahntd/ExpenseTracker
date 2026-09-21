@@ -59,6 +59,15 @@ interface CategoryDao {
     fun getAll(): Flow<List<CategoryEntity>>
 
     /**
+     * Reads every category row regardless of [CategoryEntity.deletedAt]/[CategoryEntity.syncStatus],
+     * for [com.pahntd.expensetracker.data.sync.PullManager]'s merge, which must see local
+     * `PENDING_DELETE` tombstones to reconcile them against the server snapshot. UI-facing reads
+     * should use [getAll] instead.
+     */
+    @Query("SELECT * FROM categories")
+    suspend fun findAll(): List<CategoryEntity>
+
+    /**
      * Looks up a category regardless of its [CategoryEntity.deletedAt]/[CategoryEntity.syncStatus]
      * state, since mutation flows need to see a pending-delete row to correctly block further
      * edits on it. UI-facing reads should use [getAll] instead.
