@@ -18,8 +18,11 @@ import javax.inject.Inject
 
 /**
  * Owns sync orchestration between Room and the remote API: Push Create/Update/Delete, guarded
- * against an in-flight request's response overwriting a newer local mutation. Pull/Merge are
- * handled elsewhere.
+ * against an in-flight request's response overwriting a newer local mutation, followed by
+ * [PullManager.pull] to bring Room back up to date with the server's converged state. Every
+ * [sync] pass runs Push then Pull, in that order - a push must land (or fail non-retryably)
+ * before the fetched snapshot is merged in, so the pull's LWW merge is comparing against Room
+ * rows that reflect this pass's own pushes rather than racing them.
  *
  * Categories are pushed before transactions because a transaction can reference a category by
  * id, and the server enforces that foreign key. A category whose create fails is not guaranteed
@@ -47,20 +50,48 @@ class SyncManager @Inject constructor(
     private val categoryDao: CategoryDao,
     private val transactionDao: TransactionDao,
     private val categoryApi: CategoryApi,
-    private val transactionApi: TransactionApi
+    private val transactionApi: TransactionApi,
+    private val pullManager: PullManager
 ) {
 
     /**
-     * Runs one push pass and reports whether this pass is caught up ([SyncResult.Success]) or hit
-     * at least one [PushResult.RetryableFailure] worth an automatic WorkManager retry
-     * ([SyncResult.Retry]). This is a different question from whether `PENDING_*` rows remain in
-     * Room afterwards ([hasPendingWork]): a row can stay `PENDING_*` because of a
-     * [PushResult.NonRetryableFailure] (e.g. a 400 validation error) or a skipped FK dependency,
-     * neither of which repeating the identical request would fix - those are left for a future
-     * explicit trigger, not chased by WorkManager's backoff. Every eligible record is still
-     * attempted regardless of what happened to any other record in the same pass.
+     * Runs one Push pass, then - unless Push hit a [PushResult.RetryableFailure] - one Pull pass,
+     * and reduces the two into the single [SyncResult] [SyncWorker] maps onto a WorkManager
+     * `Result`:
+     *
+     * - Push [PushResult.RetryableFailure] -> [SyncResult.Retry] immediately, without pulling.
+     *   Retrying the push is the only thing worth doing before the next attempt; pulling a
+     *   snapshot now wouldn't change that outcome and just delays the retry.
+     * - Push all [PushResult.Success]/[PushResult.NonRetryableFailure] -> proceed to Pull.
+     *   A [PushResult.NonRetryableFailure] leaves its row `PENDING_*` (see [pushPhase]) but must
+     *   not by itself trigger a WorkManager retry, so this pass still continues to Pull.
+     * - Pull [PullResult.RetryableFailure] -> [SyncResult.Retry].
+     * - Pull [PullResult.Success] or [PullResult.NonRetryableFailure] -> [SyncResult.Success].
+     *   A [PullResult.NonRetryableFailure] (e.g. one unmappable server record) is not chased by
+     *   WorkManager's backoff either, and never discards or overwrites local `PENDING_*` rows -
+     *   [PullManager.pull] only merges on [PullResult.Success].
      */
     suspend fun sync(trigger: SyncTrigger): SyncResult {
+        val pushResult = pushPhase()
+        if (pushResult is PushResult.RetryableFailure) {
+            return SyncResult.Retry
+        }
+
+        return when (pullManager.pull()) {
+            is PullResult.Success -> SyncResult.Success
+            PullResult.RetryableFailure -> SyncResult.Retry
+            PullResult.NonRetryableFailure -> SyncResult.Success
+        }
+    }
+
+    /**
+     * Runs every push phase and reduces all per-record [PushResult]s down to whether this pass
+     * contained at least one [PushResult.RetryableFailure]. Every eligible record is still
+     * attempted regardless of what happened to any other record in the same pass; a
+     * [PushResult.NonRetryableFailure] here is reported as such (not [PushResult.Success]) purely
+     * so [sync] can tell the two apart, even though both let [sync] proceed to Pull.
+     */
+    private suspend fun pushPhase(): PushResult {
         val categoryCreates = syncCategoryCreates()
         val categoryUpdateResults = syncCategoryUpdates()
         val transactionCreateResults = syncTransactionCreates(categoryCreates.failedIds)
@@ -71,10 +102,10 @@ class SyncManager @Inject constructor(
         val allResults = categoryCreates.results + categoryUpdateResults + transactionCreateResults +
             transactionUpdateResults + transactionDeleteResults + categoryDeleteResults
 
-        return if (allResults.any { it is PushResult.RetryableFailure }) {
-            SyncResult.Retry
-        } else {
-            SyncResult.Success
+        return when {
+            allResults.any { it is PushResult.RetryableFailure } -> PushResult.RetryableFailure
+            allResults.any { it is PushResult.NonRetryableFailure } -> PushResult.NonRetryableFailure
+            else -> PushResult.Success
         }
     }
 

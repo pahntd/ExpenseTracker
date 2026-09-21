@@ -24,7 +24,7 @@ import javax.inject.Inject
  * merged or persisted unless both resources come back valid (there is no partial
  * [PullResult.Success] and no partial merge).
  *
- * Not called from [SyncManager] yet - orchestrating push and pull together is separate work.
+ * Called from [SyncManager.sync] after the push phase completes.
  */
 class PullManager @Inject constructor(
     private val categoryApi: CategoryApi,
