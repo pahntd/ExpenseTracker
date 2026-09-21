@@ -36,6 +36,7 @@ class ExpenseApplication : Application(), Configuration.Provider {
         super.onCreate()
         applyTheme()
         observeReconnect()
+        syncScheduler.schedulePeriodicSync()
     }
 
     /**

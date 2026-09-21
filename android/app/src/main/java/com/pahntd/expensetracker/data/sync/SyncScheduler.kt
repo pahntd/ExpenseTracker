@@ -1,5 +1,6 @@
 package com.pahntd.expensetracker.data.sync
 
+import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.ExistingWorkPolicy
 import androidx.work.WorkManager
 import javax.inject.Inject
@@ -29,7 +30,28 @@ class SyncScheduler @Inject constructor(
         )
     }
 
+    /**
+     * Registers the recurring [PeriodicSyncTriggerWorker] as unique periodic work - a safety net
+     * on top of the event-driven triggers, not a second sync pipeline; each time it fires it just
+     * calls [enqueueSync] with [SyncTrigger.PERIODIC], same as any other trigger source.
+     *
+     * [ExistingPeriodicWorkPolicy.KEEP]: this is meant to be called from app-process
+     * initialization (see [com.pahntd.expensetracker.ExpenseApplication]), which can run many
+     * times a day as the process is killed and restarted. `KEEP` makes repeated calls a no-op once
+     * the schedule already exists, instead of restarting the interval's clock (or dropping a
+     * currently-pending run) on every single process start - the periodic schedule is app-level
+     * configuration, not a per-launch event like [enqueueSync]'s triggers are.
+     */
+    fun schedulePeriodicSync() {
+        workManager.enqueueUniquePeriodicWork(
+            UNIQUE_PERIODIC_SYNC_WORK_NAME,
+            ExistingPeriodicWorkPolicy.KEEP,
+            periodicSyncTriggerWorkRequest()
+        )
+    }
+
     companion object {
         const val UNIQUE_SYNC_WORK_NAME = "expense_tracker_sync"
+        const val UNIQUE_PERIODIC_SYNC_WORK_NAME = "expense_tracker_periodic_sync"
     }
 }
