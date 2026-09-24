@@ -24,7 +24,8 @@ class SettingRepository @Inject constructor(
     }
 
     /**
-     * Logs the current local account out: cancels background sync, best-effort revokes the
+     * Logs the current local account out: cancels background sync (both the one-time work and the
+     * periodic safety net - see [SyncScheduler.cancelPeriodicSync]), best-effort revokes the
      * refresh token, wipes the local dataset, then clears the session - in that order, so
      * cancelling sync happens before anything it reads (Room, the session) is torn down.
      * Transactions are cleared before categories since a transaction can reference a category id
@@ -35,6 +36,7 @@ class SettingRepository @Inject constructor(
      */
     suspend fun logout() {
         syncScheduler.cancelSync()
+        syncScheduler.cancelPeriodicSync()
 
         sessionManager.getCurrentRefreshToken()?.let { refreshToken ->
             authRepository.logout(refreshToken)

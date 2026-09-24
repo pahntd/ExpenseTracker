@@ -88,6 +88,9 @@ class LoginViewModel @Inject constructor(
                             // Fire-and-forget: enqueueSync only schedules background work, it
                             // never blocks the login flow on the sync itself.
                             syncScheduler.enqueueSync(SyncTrigger.LOGIN)
+                            // Re-arms the periodic safety net in case a prior logout in this same
+                            // process cancelled it - KEEP makes this a no-op otherwise.
+                            syncScheduler.schedulePeriodicSync()
                             _eventState.emit(LoginEvent.Success(response))
                         } catch (e: CancellationException) {
                             throw e
