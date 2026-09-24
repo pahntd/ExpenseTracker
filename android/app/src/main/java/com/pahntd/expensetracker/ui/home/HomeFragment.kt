@@ -23,6 +23,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.pahntd.expensetracker.R
+import com.pahntd.expensetracker.data.sync.SyncState
 import com.pahntd.expensetracker.databinding.FragmentHomeBinding
 import com.pahntd.expensetracker.utils.dp
 import com.pahntd.expensetracker.utils.toCurrency
@@ -52,6 +53,7 @@ class HomeFragment : Fragment() {
         setupRecyclerView()
         setupSearchView(requireContext())
         observeUi()
+        observeSyncState()
         setupListener()
     }
 
@@ -84,6 +86,45 @@ class HomeFragment : Fragment() {
                 }
             }
         }
+    }
+
+    /**
+     * Display-only: maps [com.pahntd.expensetracker.data.sync.SyncStatusHolder]'s current
+     * [SyncState] to [binding.tvSyncStatus]'s text/visibility. Does not read or infer anything
+     * about pending local changes - SyncState is a sync-pass status signal only.
+     */
+    private fun observeSyncState() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.syncState.collect { state ->
+                    updateSyncStatusText(state)
+                }
+            }
+        }
+    }
+
+    private fun updateSyncStatusText(state: SyncState) {
+        val text = when (state) {
+            SyncState.IDLE -> null
+            SyncState.SYNCING -> "Syncing..."
+            SyncState.SYNCED -> "Synced"
+            SyncState.OFFLINE -> "Offline"
+            SyncState.SYNC_FAILED -> "Sync failed"
+        }
+        if (text == null) {
+            binding.tvSyncStatus.visibility = View.GONE
+            return
+        }
+        binding.tvSyncStatus.text = text
+        binding.tvSyncStatus.setTextColor(ContextCompat.getColor(requireContext(), state.textColorRes()))
+        binding.tvSyncStatus.visibility = View.VISIBLE
+    }
+
+    private fun SyncState.textColorRes(): Int = when (this) {
+        SyncState.SYNCING -> R.color.primary_blue
+        SyncState.SYNCED -> R.color.green
+        SyncState.SYNC_FAILED -> R.color.orange
+        SyncState.OFFLINE, SyncState.IDLE -> R.color.blur_text_color
     }
 
     private fun setupSearchView(context: Context) {

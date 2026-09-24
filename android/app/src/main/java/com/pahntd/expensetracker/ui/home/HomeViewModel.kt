@@ -5,6 +5,8 @@ import androidx.lifecycle.viewModelScope
 import com.pahntd.expensetracker.data.local.converter.TransactionType
 import com.pahntd.expensetracker.data.repository.CategoryRepository
 import com.pahntd.expensetracker.data.repository.TransactionRepository
+import com.pahntd.expensetracker.data.sync.SyncState
+import com.pahntd.expensetracker.data.sync.SyncStatusHolder
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -18,11 +20,19 @@ import javax.inject.Inject
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     private val transactionRepository: TransactionRepository,
-    private val categoryRepository: CategoryRepository
+    private val categoryRepository: CategoryRepository,
+    private val syncStatusHolder: SyncStatusHolder
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(HomeUiState())
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
+
+    /**
+     * Display-only pass-through of [SyncStatusHolder.state] - display text/visibility mapping
+     * lives in the UI layer, not here, so this is exposed as-is rather than copied into a second
+     * `MutableStateFlow`.
+     */
+    val syncState: StateFlow<SyncState> = syncStatusHolder.state
 
     private val searchQuery = MutableStateFlow("")
 
