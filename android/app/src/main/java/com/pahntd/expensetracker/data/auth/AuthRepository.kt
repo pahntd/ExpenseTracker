@@ -81,4 +81,19 @@ class AuthRepository @Inject constructor(
             RefreshResult.UnknownError
         }
     }
+
+    /**
+     * Best-effort POST /auth/logout to revoke [refreshToken] server-side. Every outcome -
+     * success, a rejected/already-invalid token, or a network failure - is swallowed here: local
+     * logout must never depend on this call reaching the server or succeeding.
+     */
+    suspend fun logout(refreshToken: String) {
+        try {
+            authApi.logout(RefreshTokenRequest(refreshToken = refreshToken))
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            // Best effort - see kdoc above.
+        }
+    }
 }

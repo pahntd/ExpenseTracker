@@ -6,6 +6,7 @@ import com.pahntd.expensetracker.data.remote.dto.LoginRequest
 import com.pahntd.expensetracker.data.remote.dto.LoginResponse
 import com.pahntd.expensetracker.data.remote.dto.RefreshTokenRequest
 import com.pahntd.expensetracker.data.remote.dto.RefreshTokenResponse
+import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.POST
 
@@ -25,4 +26,10 @@ interface AuthApi {
     suspend fun refresh(
         @Body request: RefreshTokenRequest
     ): RefreshTokenResponse
+
+    /** Revokes [request]'s refresh token server-side. Called best-effort on logout. */
+    @POST("auth/logout")
+    suspend fun logout(
+        @Body request: RefreshTokenRequest
+    ): Response<Unit>
 }

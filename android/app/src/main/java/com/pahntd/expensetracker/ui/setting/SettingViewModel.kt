@@ -35,8 +35,10 @@ class SettingViewModel @Inject constructor(
         }
     }
 
-    /** Single entry point into the logout operation itself - implemented in a later step. */
-    private fun proceedWithLogout() {
+    /** Single entry point into the logout operation, shared by both the warned and direct paths. */
+    private suspend fun proceedWithLogout() {
+        settingRepository.logout()
+        _eventState.emit(SettingEventState.LoggedOut)
     }
 
 }

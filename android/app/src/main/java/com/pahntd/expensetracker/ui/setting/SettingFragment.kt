@@ -13,6 +13,7 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.navigation.fragment.findNavController
 import com.pahntd.expensetracker.databinding.FragmentSettingBinding
 import com.pahntd.expensetracker.utils.AppPreferences
 import dagger.hilt.android.AndroidEntryPoint
@@ -77,6 +78,12 @@ class SettingFragment : Fragment() {
 
                         SettingEventState.PendingChangesWarning -> {
                             showLogoutWarningDialog()
+                        }
+
+                        SettingEventState.LoggedOut -> {
+                            findNavController().navigate(
+                                SettingFragmentDirections.actionSettingsFragmentToSplashFragment()
+                            )
                         }
 
                         is SettingEventState.Error -> {

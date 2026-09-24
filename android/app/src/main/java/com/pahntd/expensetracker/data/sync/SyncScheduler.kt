@@ -42,6 +42,18 @@ class SyncScheduler @Inject constructor(
      * currently-pending run) on every single process start - the periodic schedule is app-level
      * configuration, not a per-launch event like [enqueueSync]'s triggers are.
      */
+    /**
+     * Cancels the unique one-time sync work enqueued by [enqueueSync], if any is currently queued
+     * or running. Used by logout so background sync can't keep pushing/pulling for the account
+     * being logged out. The periodic safety-net schedule from [schedulePeriodicSync] is left in
+     * place - once the session is cleared, requests go out unauthenticated (see
+     * [com.pahntd.expensetracker.data.remote.interceptor.AuthInterceptor]), so a later periodic
+     * run has no account to read or write against.
+     */
+    fun cancelSync() {
+        workManager.cancelUniqueWork(UNIQUE_SYNC_WORK_NAME)
+    }
+
     fun schedulePeriodicSync() {
         workManager.enqueueUniquePeriodicWork(
             UNIQUE_PERIODIC_SYNC_WORK_NAME,
