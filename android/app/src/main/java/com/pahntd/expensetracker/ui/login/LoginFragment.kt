@@ -12,6 +12,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
+import com.pahntd.expensetracker.R
 import com.pahntd.expensetracker.databinding.FragmentLoginBinding
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
@@ -59,19 +60,19 @@ class LoginFragment : Fragment() {
                                 ).show()
                             }
 
-                            is LoginEvent.Success -> {
-                                // Temporary: proves login succeeded. Token persistence and
-                                // navigation are handled in later steps.
-                                Toast.makeText(
-                                    requireContext(),
-                                    "Login successful",
-                                    Toast.LENGTH_SHORT
-                                ).show()
-                            }
+                            is LoginEvent.Success -> navigateToHome()
                         }
                     }
                 }
             }
+        }
+    }
+
+    private fun navigateToHome() {
+        val navController = findNavController()
+        // Guard against a double navigate if the event is delivered after we already left.
+        if (navController.currentDestination?.id == R.id.loginFragment) {
+            navController.navigate(LoginFragmentDirections.actionLoginFragmentToHomeFragment())
         }
     }
 
