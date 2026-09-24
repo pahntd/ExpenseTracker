@@ -5,6 +5,8 @@ import com.pahntd.expensetracker.data.local.dao.CategoryDao
 import com.pahntd.expensetracker.data.local.dao.TransactionDao
 import com.pahntd.expensetracker.data.local.entity.CategoryEntity
 import com.pahntd.expensetracker.data.local.entity.TransactionEntity
+import com.pahntd.expensetracker.data.network.NetworkMonitor
+import com.pahntd.expensetracker.data.network.NetworkState
 import com.pahntd.expensetracker.data.remote.api.CategoryApi
 import com.pahntd.expensetracker.data.remote.api.TransactionApi
 import com.pahntd.expensetracker.data.remote.dto.CategoryResponse
@@ -51,7 +53,9 @@ class SyncManager @Inject constructor(
     private val transactionDao: TransactionDao,
     private val categoryApi: CategoryApi,
     private val transactionApi: TransactionApi,
-    private val pullManager: PullManager
+    private val pullManager: PullManager,
+    private val syncStatusHolder: SyncStatusHolder,
+    private val networkMonitor: NetworkMonitor
 ) {
 
     /**
@@ -70,19 +74,72 @@ class SyncManager @Inject constructor(
      *   A [PullResult.NonRetryableFailure] (e.g. one unmappable server record) is not chased by
      *   WorkManager's backoff either, and never discards or overwrites local `PENDING_*` rows -
      *   [PullManager.pull] only merges on [PullResult.Success].
+     *
+     * Alongside [SyncResult] - which only answers "should WorkManager retry" - this also writes
+     * the pass's outcome to [syncStatusHolder] as a [SyncState], for UI consumption. The two are
+     * deliberately different signals and must not be confused: [SyncResult.Success] does **not**
+     * imply [SyncState.SYNCED] - e.g. a [PullResult.NonRetryableFailure] maps to
+     * [SyncResult.Success] (nothing for WorkManager to retry) but must still report
+     * [SyncState.SYNC_FAILED]/[SyncState.OFFLINE] (nothing was actually synced).
+     *
+     * If this pass is cancelled (logout, WorkManager stopping the work, process/lifecycle
+     * teardown) before reaching one of the returns below, the `catch` resets [syncStatusHolder]
+     * to [SyncState.IDLE] and rethrows immediately - cancellation is not a completed pass, so it
+     * must never be reported as [SyncState.SYNCED]/[SyncState.SYNC_FAILED]/[SyncState.OFFLINE],
+     * and [CancellationException] must never be swallowed. This is a `catch`, not a `finally`:
+     * a `finally` would also run on every *normal* return path and clobber the terminal state
+     * that was just written a line above it.
      */
     suspend fun sync(trigger: SyncTrigger): SyncResult {
-        val pushResult = pushPhase()
-        if (pushResult is PushResult.RetryableFailure) {
-            return SyncResult.Retry
-        }
+        syncStatusHolder.setState(SyncState.SYNCING)
 
-        return when (pullManager.pull()) {
-            is PullResult.Success -> SyncResult.Success
-            PullResult.RetryableFailure -> SyncResult.Retry
-            PullResult.NonRetryableFailure -> SyncResult.Success
+        try {
+            val pushResult = pushPhase()
+            if (pushResult is PushResult.RetryableFailure) {
+                // SyncResult.Retry unchanged: WorkManager retries this pass. SyncState is a
+                // separate decision - nothing succeeded this pass, so it can never be SYNCED here.
+                syncStatusHolder.setState(terminalFailureSyncState())
+                return SyncResult.Retry
+            }
+
+            val pullResult = pullManager.pull()
+            val syncResult = when (pullResult) {
+                is PullResult.Success -> SyncResult.Success
+                PullResult.RetryableFailure -> SyncResult.Retry
+                PullResult.NonRetryableFailure -> SyncResult.Success
+            }
+
+            // SYNCED requires push AND pull to have both fully succeeded - not just "SyncResult
+            // ended up Success". A NonRetryableFailure on either side (or a RetryableFailure on
+            // pull) still reports SyncState failure/offline even where SyncResult is Success,
+            // since WorkManager not retrying is not the same thing as the pass having actually
+            // synced anything.
+            val passFullySucceeded = pushResult is PushResult.Success && pullResult is PullResult.Success
+            syncStatusHolder.setState(
+                if (passFullySucceeded) SyncState.SYNCED else terminalFailureSyncState()
+            )
+
+            return syncResult
+        } catch (e: CancellationException) {
+            syncStatusHolder.setState(SyncState.IDLE)
+            throw e
         }
     }
+
+    /**
+     * [SyncState.OFFLINE] vs [SyncState.SYNC_FAILED] for a failed/incomplete pass: read the
+     * existing [NetworkMonitor] at the moment the terminal state is decided, rather than
+     * inferring offline from the failure's [com.pahntd.expensetracker.data.remote.error.AppError]
+     * type - every network-flavored exception ([com.pahntd.expensetracker.data.remote.error.AppError.Network])
+     * already collapses IOExceptions (timeout, DNS failure, no connectivity, ...) into one case,
+     * so it can't reliably distinguish "device is offline" from "server is slow/unreachable."
+     */
+    private fun terminalFailureSyncState(): SyncState =
+        if (networkMonitor.networkState.value == NetworkState.OFFLINE) {
+            SyncState.OFFLINE
+        } else {
+            SyncState.SYNC_FAILED
+        }
 
     /**
      * Runs every push phase and reduces all per-record [PushResult]s down to whether this pass
