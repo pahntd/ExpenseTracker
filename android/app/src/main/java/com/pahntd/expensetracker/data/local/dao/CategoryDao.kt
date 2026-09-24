@@ -83,6 +83,14 @@ interface CategoryDao {
     suspend fun findBySyncStatus(status: SyncStatus): List<CategoryEntity>
 
     /**
+     * Whether any category row is not [SyncStatus.SYNCED] - i.e. [SyncStatus.PENDING_CREATE],
+     * [SyncStatus.PENDING_UPDATE] or [SyncStatus.PENDING_DELETE]. An `EXISTS` query so this never
+     * has to load the matching rows themselves.
+     */
+    @Query("SELECT EXISTS(SELECT 1 FROM categories WHERE syncStatus != :synced)")
+    suspend fun hasPendingChanges(synced: SyncStatus = SyncStatus.SYNCED): Boolean
+
+    /**
      * Applies a server response only if the row is still exactly the state
      * ([expectedUpdatedAt]/[expectedSyncStatus]) that was sent to the server, so a response for an
      * in-flight request can never overwrite a newer local mutation that happened while it was

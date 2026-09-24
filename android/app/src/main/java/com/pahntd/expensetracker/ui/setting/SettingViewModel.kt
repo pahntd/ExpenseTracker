@@ -17,4 +17,26 @@ class SettingViewModel @Inject constructor(
     private val _eventState = MutableSharedFlow<SettingEventState>()
     val eventState = _eventState.asSharedFlow()
 
+    /** Tapped from Settings: warn first when there are unsynced local changes, else log out directly. */
+    fun onLogoutClick() {
+        viewModelScope.launch {
+            if (settingRepository.hasPendingChanges()) {
+                _eventState.emit(SettingEventState.PendingChangesWarning)
+            } else {
+                proceedWithLogout()
+            }
+        }
+    }
+
+    /** Confirmed from the [SettingEventState.PendingChangesWarning] dialog. */
+    fun onLogoutConfirmed() {
+        viewModelScope.launch {
+            proceedWithLogout()
+        }
+    }
+
+    /** Single entry point into the logout operation itself - implemented in a later step. */
+    private fun proceedWithLogout() {
+    }
+
 }

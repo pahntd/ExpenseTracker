@@ -57,7 +57,9 @@ class SettingFragment : Fragment() {
     }
 
     private fun setupClick() {
-
+        binding.tvLogout.setOnClickListener {
+            viewModel.onLogoutClick()
+        }
     }
 
     private fun observeEvent() {
@@ -73,6 +75,10 @@ class SettingFragment : Fragment() {
                             ).show()
                         }
 
+                        SettingEventState.PendingChangesWarning -> {
+                            showLogoutWarningDialog()
+                        }
+
                         is SettingEventState.Error -> {
                             Toast.makeText(
                                 requireContext(),
@@ -84,6 +90,17 @@ class SettingFragment : Fragment() {
                 }
             }
         }
+    }
+
+    private fun showLogoutWarningDialog() {
+        AlertDialog.Builder(requireContext())
+            .setTitle("Logout ?")
+            .setMessage("Unsynced local changes will be lost.")
+            .setNegativeButton("Cancel", null)
+            .setPositiveButton("Logout") { _, _ ->
+                viewModel.onLogoutConfirmed()
+            }
+            .show()
     }
 
 //    private fun showAlertDialog() {
