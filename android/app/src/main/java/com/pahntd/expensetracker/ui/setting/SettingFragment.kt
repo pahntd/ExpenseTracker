@@ -104,6 +104,11 @@ class SettingFragment : Fragment() {
             .setTitle("Logout ?")
             .setMessage("Unsynced local changes will be lost.")
             .setNegativeButton("Cancel", null)
+            // AlertDialog dismisses itself before invoking the listener, so the dialog is
+            // already gone when the sync is enqueued.
+            .setNeutralButton("Sync now") { _, _ ->
+                viewModel.onSyncNowClick()
+            }
             .setPositiveButton("Logout") { _, _ ->
                 viewModel.onLogoutConfirmed()
             }
