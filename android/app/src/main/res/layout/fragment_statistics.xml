@@ -96,8 +96,16 @@
                 <com.github.mikephil.charting.charts.PieChart
                     android:id="@+id/pieChartExpenseByCategory"
                     android:layout_width="match_parent"
-                    android:layout_height="300dp"
+                    android:layout_height="260dp"
                     android:layout_marginTop="8dp" />
+
+                <!-- Filled by renderCategoryLegend(): one row per category. -->
+                <LinearLayout
+                    android:id="@+id/layoutExpenseLegend"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:orientation="vertical" />
 
             </LinearLayout>
 

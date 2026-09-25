@@ -51,8 +51,11 @@ class MainActivity : AppCompatActivity() {
 
     private fun setBottomBarVisible(visible: Boolean) {
         val bottomBar = binding.bottomNavigation
+        // Cancel an in-flight slide first: otherwise a hide started on Splash can finish after Home
+        // asked to show the bar (its end action is skipped on cancel) and leave the bar GONE.
+        bottomBar.animate().cancel()
         if (visible) {
-            if (bottomBar.visibility == View.VISIBLE) return
+            if (bottomBar.visibility == View.VISIBLE && bottomBar.translationY == 0f) return
             bottomBar.visibility = View.VISIBLE
             bottomBar.animate()
                 .translationY(0f)
