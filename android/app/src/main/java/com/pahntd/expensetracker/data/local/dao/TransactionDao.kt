@@ -207,4 +207,66 @@ interface TransactionDao {
 """
     )
     suspend fun getIncomeByCategory(): List<CategoryWithAmountSummary>
+
+    /*
+     * Date-range counterparts of the statistics queries above, for the Statistics time filter.
+     * The range is half-open - [startDate, endDate) in epoch millis - so a transaction exactly at
+     * the next period's start belongs to that period only.
+     */
+
+    @Query(
+        """
+    SELECT SUM(amount)
+    FROM expenses
+    WHERE type = 'INCOME' AND deletedAt IS NULL
+    AND date >= :startDate AND date < :endDate
+"""
+    )
+    suspend fun getTotalIncomeInRange(startDate: Long, endDate: Long): Double?
+
+    @Query(
+        """
+    SELECT SUM(amount)
+    FROM expenses
+    WHERE type = 'EXPENSE' AND deletedAt IS NULL
+    AND date >= :startDate AND date < :endDate
+"""
+    )
+    suspend fun getTotalExpenseInRange(startDate: Long, endDate: Long): Double?
+
+    @Query(
+        """
+    SELECT
+        categories.id AS categoryId,
+        categories.name AS categoryName,
+        categories.icon AS icon,
+        SUM(expenses.amount) AS totalAmount
+    FROM expenses
+    INNER JOIN categories
+        ON expenses.categoryId = categories.id
+    WHERE expenses.type = 'EXPENSE' AND expenses.deletedAt IS NULL
+    AND expenses.date >= :startDate AND expenses.date < :endDate
+    GROUP BY categories.id
+    ORDER BY totalAmount DESC
+"""
+    )
+    suspend fun getExpenseByCategoryInRange(startDate: Long, endDate: Long): List<CategoryWithAmountSummary>
+
+    @Query(
+        """
+    SELECT
+        categories.id AS categoryId,
+        categories.name AS categoryName,
+        categories.icon AS icon,
+        SUM(expenses.amount) AS totalAmount
+    FROM expenses
+    INNER JOIN categories
+        ON expenses.categoryId = categories.id
+    WHERE expenses.type = 'INCOME' AND expenses.deletedAt IS NULL
+    AND expenses.date >= :startDate AND expenses.date < :endDate
+    GROUP BY categories.id
+    ORDER BY totalAmount DESC
+"""
+    )
+    suspend fun getIncomeByCategoryInRange(startDate: Long, endDate: Long): List<CategoryWithAmountSummary>
 }
