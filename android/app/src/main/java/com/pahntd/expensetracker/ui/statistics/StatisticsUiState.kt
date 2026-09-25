@@ -8,5 +8,7 @@ data class StatisticsUiState(
     val totalExpense: Double = 0.0,
     val balance: Double = 0.0,
     val expenseByCategory: List<CategoryWithAmountSummary> = emptyList(),
-    val incomeByCategory: List<CategoryWithAmountSummary> = emptyList()
+    val incomeByCategory: List<CategoryWithAmountSummary> = emptyList(),
+    /** Last 12 months; independent of [timeFilter]. */
+    val monthlyTrend: List<MonthlyTrendPoint> = emptyList()
 )

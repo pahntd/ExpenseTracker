@@ -12,6 +12,7 @@ import com.pahntd.expensetracker.data.local.converter.TransactionType
 import com.pahntd.expensetracker.data.local.entity.TransactionEntity
 import com.pahntd.expensetracker.data.local.relation.CategoryWithAmountSummary
 import com.pahntd.expensetracker.data.local.relation.ExpenseWithCategory
+import com.pahntd.expensetracker.data.local.relation.MonthlyAmountSummary
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -253,4 +254,27 @@ interface TransactionDao {
 """
     )
     suspend fun getIncomeByCategoryInRange(startDate: Long, endDate: Long): List<CategoryWithAmountSummary>
+
+    /**
+     * Income and expense totals per calendar month within the half-open range
+     * [startDate, endDate), oldest month first, for the Statistics monthly trend. `date` is epoch
+     * millis, so it is converted to seconds and to the device's local time before taking the year
+     * and month; grouping by both keeps e.g. January 2025 and January 2026 apart. Months without
+     * any transaction produce no row.
+     */
+    @Query(
+        """
+    SELECT
+        CAST(strftime('%Y', date / 1000, 'unixepoch', 'localtime') AS INTEGER) AS year,
+        CAST(strftime('%m', date / 1000, 'unixepoch', 'localtime') AS INTEGER) AS month,
+        SUM(CASE WHEN type = 'INCOME' THEN amount ELSE 0 END) AS totalIncome,
+        SUM(CASE WHEN type = 'EXPENSE' THEN amount ELSE 0 END) AS totalExpense
+    FROM expenses
+    WHERE deletedAt IS NULL
+    AND date >= :startDate AND date < :endDate
+    GROUP BY year, month
+    ORDER BY year ASC, month ASC
+"""
+    )
+    fun getMonthlyIncomeExpenseInRange(startDate: Long, endDate: Long): Flow<List<MonthlyAmountSummary>>
 }

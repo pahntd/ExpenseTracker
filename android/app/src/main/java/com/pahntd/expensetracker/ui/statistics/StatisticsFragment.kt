@@ -72,6 +72,7 @@ class StatisticsFragment : Fragment() {
         binding.barChartIncomeExpense.setupIncomeExpenseChart()
         binding.pieChartExpenseByCategory.setupCategoryPieChart("No expenses in this period")
         binding.pieChartIncomeByCategory.setupCategoryPieChart("No income in this period")
+        binding.lineChartMonthlyTrend.setupMonthlyTrendChart("No transactions in the last 12 months")
     }
 
     private fun observeUiState() {
@@ -86,6 +87,7 @@ class StatisticsFragment : Fragment() {
                     binding.layoutExpenseLegend.renderCategoryLegend(state.expenseByCategory)
                     binding.pieChartIncomeByCategory.renderByCategory(state.incomeByCategory)
                     binding.layoutIncomeLegend.renderCategoryLegend(state.incomeByCategory)
+                    binding.lineChartMonthlyTrend.renderMonthlyTrend(state.monthlyTrend)
                 }
             }
         }

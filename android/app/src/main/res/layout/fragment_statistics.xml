@@ -149,7 +149,7 @@
 
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- Income & Expense Trend -->
+        <!-- Income & Expense Monthly Trend: always the last 12 months, not affected by the time filter. -->
 
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
@@ -165,12 +165,12 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Income &amp; Expense Trend"
+                    android:text="Income &amp; Expense Monthly Trend"
                     android:textSize="18sp"
                     android:textStyle="bold" />
 
                 <com.github.mikephil.charting.charts.LineChart
-                    android:id="@+id/lineChartTrend"
+                    android:id="@+id/lineChartMonthlyTrend"
                     android:layout_width="match_parent"
                     android:layout_height="260dp"
                     android:layout_marginTop="8dp" />
