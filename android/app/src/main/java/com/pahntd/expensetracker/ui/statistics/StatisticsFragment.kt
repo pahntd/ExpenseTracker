@@ -70,7 +70,8 @@ class StatisticsFragment : Fragment() {
 
     private fun setupChart() {
         binding.barChartIncomeExpense.setupIncomeExpenseChart()
-        binding.pieChartExpenseByCategory.setupExpenseCategoryChart()
+        binding.pieChartExpenseByCategory.setupCategoryPieChart("No expenses in this period")
+        binding.pieChartIncomeByCategory.setupCategoryPieChart("No income in this period")
     }
 
     private fun observeUiState() {
@@ -81,8 +82,10 @@ class StatisticsFragment : Fragment() {
                         totalIncome = state.totalIncome,
                         totalExpense = state.totalExpense
                     )
-                    binding.pieChartExpenseByCategory.renderExpenseByCategory(state.expenseByCategory)
+                    binding.pieChartExpenseByCategory.renderByCategory(state.expenseByCategory)
                     binding.layoutExpenseLegend.renderCategoryLegend(state.expenseByCategory)
+                    binding.pieChartIncomeByCategory.renderByCategory(state.incomeByCategory)
+                    binding.layoutIncomeLegend.renderCategoryLegend(state.incomeByCategory)
                 }
             }
         }

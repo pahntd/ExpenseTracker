@@ -34,19 +34,18 @@ private val OTHERS_COLOR = Color.parseColor("#9E9E9E")
 /** Slices below this share (in %) get no value label; the legend still lists them. */
 private const val MIN_LABELED_PERCENT = 5f
 
-private const val NO_DATA_TEXT = "No expenses in this period"
-
 private fun sliceColor(rank: Int): Int = SLICE_COLORS.getOrElse(rank) { OTHERS_COLOR }
 
 /** Categories that can be drawn: a pie cannot show zero or negative shares. */
 private fun List<CategoryWithAmountSummary>.chartable() = filter { it.totalAmount > 0.0 }
 
 /**
- * Static look of the Expense by Category donut: no rotation/highlight, no built-in legend (the
- * category names, amounts and percentages go in the legend rendered by [renderCategoryLegend],
- * where long names can ellipsize), no slice name labels. Call once per view.
+ * Static look of a by-category donut (Expense or Income): no rotation/highlight, no built-in legend
+ * (the category names, amounts and percentages go in the legend rendered by [renderCategoryLegend],
+ * where long names can ellipsize), no slice name labels. [noDataText] is shown when the period has
+ * nothing to draw. Call once per view.
  */
-fun PieChart.setupExpenseCategoryChart() {
+fun PieChart.setupCategoryPieChart(noDataText: String) {
     val textColor = MaterialColors.getColor(this, com.google.android.material.R.attr.colorOnSurface)
 
     description.isEnabled = false
@@ -63,15 +62,16 @@ fun PieChart.setupExpenseCategoryChart() {
     setCenterTextColor(textColor)
     setCenterTextSize(14f)
 
-    setNoDataText(NO_DATA_TEXT)
+    setNoDataText(noDataText)
     setNoDataTextColor(textColor)
 }
 
 /**
  * Renders the already-grouped [categories] (as returned by the DAO, largest first) as slices, with
- * the total in the hole. With no positive amounts the chart is cleared to show [NO_DATA_TEXT].
+ * the total in the hole. With no positive amounts the chart is cleared to show the no-data text
+ * given to [setupCategoryPieChart].
  */
-fun PieChart.renderExpenseByCategory(categories: List<CategoryWithAmountSummary>) {
+fun PieChart.renderByCategory(categories: List<CategoryWithAmountSummary>) {
     val items = categories.chartable()
     if (items.isEmpty()) {
         clear()
@@ -107,7 +107,7 @@ fun PieChart.renderExpenseByCategory(categories: List<CategoryWithAmountSummary>
 
 /**
  * Fills this container with one row per category - color key, name, share and amount - matching
- * the slice colors of [renderExpenseByCategory]. Hidden when there is nothing to show, since the
+ * the slice colors of [renderByCategory]. Hidden when there is nothing to show, since the
  * chart already displays its no-data text.
  */
 fun LinearLayout.renderCategoryLegend(categories: List<CategoryWithAmountSummary>) {
