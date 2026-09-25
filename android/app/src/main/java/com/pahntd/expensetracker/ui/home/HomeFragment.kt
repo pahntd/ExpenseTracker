@@ -11,6 +11,7 @@ import android.view.ViewGroup
 import android.view.inputmethod.InputMethodManager
 import android.widget.AutoCompleteTextView
 import android.widget.ImageView
+import android.widget.Toast
 import androidx.appcompat.widget.SearchView
 import androidx.core.animation.doOnEnd
 import androidx.core.animation.doOnStart
@@ -54,6 +55,7 @@ class HomeFragment : Fragment() {
         setupSearchView(requireContext())
         observeUi()
         observeSyncState()
+        observeEvent()
         setupListener()
     }
 
@@ -93,9 +95,35 @@ class HomeFragment : Fragment() {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.syncState.collect { state ->
                     updateSyncStatusText(state)
+                    updateSyncButton(state)
                 }
             }
         }
+    }
+
+    private fun observeEvent() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.eventState.collect { event ->
+                    when (event) {
+                        HomeEventState.SyncQueuedOffline -> {
+                            Toast.makeText(
+                                requireContext(),
+                                "You're offline. Sync will run when you're back online.",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    /** Disabled while a pass is running; a tap then would be a no-op anyway (unique work, KEEP). */
+    private fun updateSyncButton(state: SyncState) {
+        val isSyncing = state == SyncState.SYNCING
+        binding.btnSync.isEnabled = !isSyncing
+        binding.btnSync.alpha = if (isSyncing) 0.4f else 1f
     }
 
     private fun updateSyncStatusText(state: SyncState) {
@@ -269,6 +297,10 @@ class HomeFragment : Fragment() {
             findNavController().navigate(
                 HomeFragmentDirections.actionHomeFragmentToAddExpenseFragment()
             )
+        }
+
+        binding.btnSync.setOnClickListener {
+            viewModel.onSyncClick()
         }
 
         binding.searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
