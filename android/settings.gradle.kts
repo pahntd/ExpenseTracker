@@ -16,6 +16,10 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
+        // MPAndroidChart is only published on JitPack; restrict JitPack to that artifact.
+        maven("https://jitpack.io") {
+            content { includeModule("com.github.PhilJay", "MPAndroidChart") }
+        }
     }
 }
 

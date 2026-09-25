@@ -105,6 +105,8 @@ dependencies {
     implementation(libs.protobuf.javalite)
     // Session encryption (Tink AEAD + Android Keystore)
     implementation(libs.tink.android)
+    // Charts (Statistics)
+    implementation(libs.mpandroidchart)
 
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)

@@ -25,6 +25,7 @@ protobuf = "3.25.5"
 protobufPlugin = "0.9.4"
 tink = "1.13.0"
 work = "2.9.1"
+mpandroidchart = "v3.1.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -71,6 +72,8 @@ protobuf-javalite = { group = "com.google.protobuf", name = "protobuf-javalite",
 tink-android = { group = "com.google.crypto.tink", name = "tink-android", version.ref = "tink" }
 # WorkManager
 androidx-work-runtime = { group = "androidx.work", name = "work-runtime-ktx", version.ref = "work" }
+# Charts (Statistics)
+mpandroidchart = { group = "com.github.PhilJay", name = "MPAndroidChart", version.ref = "mpandroidchart" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

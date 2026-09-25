@@ -11,11 +11,8 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
-import androidx.recyclerview.widget.LinearLayoutManager
-import com.pahntd.expensetracker.data.local.converter.TransactionType
 import com.pahntd.expensetracker.databinding.FragmentStatisticsBinding
 import com.pahntd.expensetracker.utils.AppPreferences
-import com.pahntd.expensetracker.utils.toCurrency
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 
@@ -36,9 +33,6 @@ class StatisticsFragment : Fragment() {
         )
     }
 
-    private lateinit var expenseAdapter: CategoryStatisticsAdapter
-    private lateinit var incomeAdapter: CategoryStatisticsAdapter
-
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -49,27 +43,9 @@ class StatisticsFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        setupRecyclerView()
         setupTimeFilter()
         observeUiState()
         loadDataStatistic()
-    }
-
-    private fun setupRecyclerView() {
-        expenseAdapter = CategoryStatisticsAdapter(TransactionType.EXPENSE)
-        incomeAdapter = CategoryStatisticsAdapter(TransactionType.INCOME)
-
-        binding.rvExpenseByCategory.apply {
-            layoutManager = LinearLayoutManager(requireContext())
-            adapter = expenseAdapter
-            isNestedScrollingEnabled = false
-        }
-
-        binding.rvIncomeByCategory.apply {
-            layoutManager = LinearLayoutManager(requireContext())
-            adapter = incomeAdapter
-            isNestedScrollingEnabled = false
-        }
     }
 
     private fun setupTimeFilter() {
@@ -94,13 +70,8 @@ class StatisticsFragment : Fragment() {
     private fun observeUiState() {
         viewLifecycleOwner.lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.uiState.collect { state ->
-                    binding.tvTotalIncome.text = state.totalIncome.toCurrency()
-                    binding.tvTotalExpense.text = state.totalExpense.toCurrency()
-                    binding.tvBalance.text = state.balance.toCurrency()
-
-                    expenseAdapter.submitList(state.expenseByCategory)
-                    incomeAdapter.submitList(state.incomeByCategory)
+                viewModel.uiState.collect { _ ->
+                    // Chart binding for the state is added in a later checkpoint.
                 }
             }
         }
