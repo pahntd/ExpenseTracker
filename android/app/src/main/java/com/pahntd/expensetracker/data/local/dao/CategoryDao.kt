@@ -24,22 +24,6 @@ interface CategoryDao {
     @Update(onConflict = OnConflictStrategy.IGNORE)
     suspend fun update(category: CategoryEntity): Int
 
-    /**
-     * Upserts pulled server categories, matching existing rows by [CategoryEntity.id] since local
-     * and server share the same UUID, so re-pulling the same record updates it in place instead
-     * of duplicating it.
-     */
-    @Transaction
-    suspend fun upsertAll(categories: List<CategoryEntity>) {
-        categories.forEach { category ->
-            if (findById(category.id) != null) {
-                update(category)
-            } else {
-                insert(category)
-            }
-        }
-    }
-
     @Delete
     suspend fun delete(category: CategoryEntity)
 

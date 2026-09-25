@@ -5,18 +5,11 @@ import com.pahntd.expensetracker.data.local.dao.CategoryDao
 import com.pahntd.expensetracker.data.local.entity.CategoryEntity
 import com.pahntd.expensetracker.data.local.relation.CategoryWithExpenseCount
 import com.pahntd.expensetracker.data.local.sync.SyncStatusPolicy
-import com.pahntd.expensetracker.data.remote.api.CategoryApi
-import com.pahntd.expensetracker.data.remote.dto.CategoryResponse
-import com.pahntd.expensetracker.data.remote.error.AppError
-import com.pahntd.expensetracker.data.remote.error.toAppError
-import com.pahntd.expensetracker.data.remote.mapper.toEntity
 import kotlinx.coroutines.flow.Flow
-import java.util.concurrent.CancellationException
 import javax.inject.Inject
 
 class CategoryRepository @Inject constructor(
-    private val categoryDao: CategoryDao,
-    private val categoryApi: CategoryApi
+    private val categoryDao: CategoryDao
 ) {
 
     fun getAllCategories(): Flow<List<CategoryEntity>> {
@@ -95,38 +88,6 @@ class CategoryRepository @Inject constructor(
 
     fun getCategoriesWithCount(): Flow<List<CategoryWithExpenseCount>> {
         return categoryDao.getCategoriesWithExpenseCount()
-    }
-
-    suspend fun getCategoriesFromApi(): List<CategoryResponse> {
-        return categoryApi.getCategories()
-    }
-
-    /**
-     * Pulls categories from the server and upserts them into Room. On failure, the existing
-     * local data is left untouched so the Room-backed UI keeps working offline, and the
-     * classified [AppError] is returned so the caller can decide what, if anything, to do about
-     * it. Returns `null` on success.
-     *
-     * Every [CategoryResponse] must map cleanly: if any one of them fails to parse, the whole
-     * pull fails as [AppError.Unknown] rather than silently dropping the malformed record and
-     * upserting the rest, so a bad server record can never partially apply.
-     */
-    suspend fun pullCategories(): AppError? {
-        val categories = try {
-            getCategoriesFromApi()
-        } catch (e: CancellationException) {
-            throw e
-        } catch (e: Exception) {
-            return e.toAppError()
-        }
-
-        val entities = categories.map { response ->
-            response.toEntity() ?: return AppError.Unknown(
-                IllegalStateException("Category ${response.id} could not be mapped from the server response")
-            )
-        }
-        categoryDao.upsertAll(entities)
-        return null
     }
 
 }

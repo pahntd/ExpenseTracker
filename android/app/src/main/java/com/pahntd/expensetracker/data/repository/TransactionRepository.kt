@@ -7,18 +7,11 @@ import com.pahntd.expensetracker.data.local.dao.TransactionDao
 import com.pahntd.expensetracker.data.local.entity.TransactionEntity
 import com.pahntd.expensetracker.data.local.relation.ExpenseWithCategory
 import com.pahntd.expensetracker.data.local.sync.SyncStatusPolicy
-import com.pahntd.expensetracker.data.remote.api.TransactionApi
-import com.pahntd.expensetracker.data.remote.dto.TransactionResponse
-import com.pahntd.expensetracker.data.remote.error.AppError
-import com.pahntd.expensetracker.data.remote.error.toAppError
-import com.pahntd.expensetracker.data.remote.mapper.toEntity
 import kotlinx.coroutines.flow.Flow
-import java.util.concurrent.CancellationException
 import javax.inject.Inject
 
 class TransactionRepository @Inject constructor(
     private val transactionDao: TransactionDao,
-    private val transactionApi: TransactionApi,
     private val categoryDao: CategoryDao
 ) {
 
@@ -131,40 +124,6 @@ class TransactionRepository @Inject constructor(
 
     suspend fun getBalance(): Double {
         return getTotalIncome() - getTotalExpense()
-    }
-
-    suspend fun getTransactionsFromApi(): List<TransactionResponse> {
-        return transactionApi.getTransactions()
-    }
-
-    /**
-     * Pulls transactions from the server and upserts them into Room. Local and server share the
-     * same UUID identity, so each transaction's categoryId is reused as-is without needing to
-     * resolve it against a separately-generated local id. On failure, the existing local data is
-     * left untouched so the Room-backed UI keeps working offline, and the classified [AppError]
-     * is returned so the caller can decide what, if anything, to do about it. Returns `null` on
-     * success.
-     *
-     * Every [TransactionResponse] must map cleanly: if any one of them fails to parse, the whole
-     * pull fails as [AppError.Unknown] rather than silently dropping the malformed record and
-     * upserting the rest, so a bad server record can never partially apply.
-     */
-    suspend fun pullTransactions(): AppError? {
-        val transactions = try {
-            getTransactionsFromApi()
-        } catch (e: CancellationException) {
-            throw e
-        } catch (e: Exception) {
-            return e.toAppError()
-        }
-
-        val entities = transactions.map { response ->
-            response.toEntity() ?: return AppError.Unknown(
-                IllegalStateException("Transaction ${response.id} could not be mapped from the server response")
-            )
-        }
-        transactionDao.upsertAll(entities)
-        return null
     }
 
 }

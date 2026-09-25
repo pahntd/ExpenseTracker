@@ -3,7 +3,6 @@ package com.pahntd.expensetracker.ui.home
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.pahntd.expensetracker.data.local.converter.TransactionType
-import com.pahntd.expensetracker.data.repository.CategoryRepository
 import com.pahntd.expensetracker.data.repository.TransactionRepository
 import com.pahntd.expensetracker.data.sync.SyncState
 import com.pahntd.expensetracker.data.sync.SyncStatusHolder
@@ -20,7 +19,6 @@ import javax.inject.Inject
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     private val transactionRepository: TransactionRepository,
-    private val categoryRepository: CategoryRepository,
     private val syncStatusHolder: SyncStatusHolder
 ) : ViewModel() {
 
@@ -78,17 +76,5 @@ class HomeViewModel @Inject constructor(
 
     fun updateSearchQuery(query: String) {
         searchQuery.value = query
-    }
-
-    /**
-     * Pulls the latest categories and transactions from the server into Room. Categories are
-     * pulled first because transactions resolve their categoryId against local category rows.
-     * Room's Flow-backed UI state above keeps showing cached data regardless of pull outcome.
-     */
-    fun pullSync() {
-        viewModelScope.launch {
-            categoryRepository.pullCategories()
-            transactionRepository.pullTransactions()
-        }
     }
 }

@@ -26,22 +26,6 @@ interface TransactionDao {
     @Update
     suspend fun update(expense: TransactionEntity)
 
-    /**
-     * Upserts pulled server transactions, matching existing rows by [TransactionEntity.id] since
-     * local and server share the same UUID, so re-pulling the same record updates it in place
-     * instead of duplicating it.
-     */
-    @Transaction
-    suspend fun upsertAll(expenses: List<TransactionEntity>) {
-        expenses.forEach { expense ->
-            if (findById(expense.id) != null) {
-                update(expense)
-            } else {
-                insert(expense)
-            }
-        }
-    }
-
     @Delete
     suspend fun delete(expense: TransactionEntity)
 
