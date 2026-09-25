@@ -44,6 +44,7 @@ class StatisticsFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         setupTimeFilter()
+        setupChart()
         observeUiState()
         loadDataStatistic()
     }
@@ -67,11 +68,18 @@ class StatisticsFragment : Fragment() {
         }
     }
 
+    private fun setupChart() {
+        binding.barChartIncomeExpense.setupIncomeExpenseChart()
+    }
+
     private fun observeUiState() {
         viewLifecycleOwner.lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.uiState.collect { _ ->
-                    // Chart binding for the state is added in a later checkpoint.
+                viewModel.uiState.collect { state ->
+                    binding.barChartIncomeExpense.renderIncomeExpense(
+                        totalIncome = state.totalIncome,
+                        totalExpense = state.totalExpense
+                    )
                 }
             }
         }
