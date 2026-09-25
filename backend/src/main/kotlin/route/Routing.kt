@@ -165,6 +165,7 @@ fun Application.configureRouting() {
             call.respond(
                 LoginResponse(
                     userId = user.id.toString(),
+                    email = user.email,
                     accessToken = accessToken,
                     refreshToken = refreshToken
                 )

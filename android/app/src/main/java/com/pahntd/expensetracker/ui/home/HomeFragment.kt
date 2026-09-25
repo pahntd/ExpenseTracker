@@ -26,6 +26,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.pahntd.expensetracker.R
 import com.pahntd.expensetracker.data.sync.SyncState
 import com.pahntd.expensetracker.databinding.FragmentHomeBinding
+import com.pahntd.expensetracker.utils.AppPreferences
 import com.pahntd.expensetracker.utils.dp
 import com.pahntd.expensetracker.utils.toCurrency
 import dagger.hilt.android.AndroidEntryPoint
@@ -51,12 +52,25 @@ class HomeFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        setupGreeting()
         setupRecyclerView()
         setupSearchView(requireContext())
         observeUi()
         observeSyncState()
         observeEvent()
         setupListener()
+    }
+
+    /** "Hello, <name> 👋", or the plain greeting when no name was saved at login. */
+    private fun setupGreeting() {
+        val username = requireContext()
+            .getSharedPreferences(AppPreferences.PREF_NAME, Context.MODE_PRIVATE)
+            .getString(AppPreferences.KEY_USERNAME, null)
+        binding.tvGreeting.text = if (username.isNullOrBlank()) {
+            "Hello 👋"
+        } else {
+            "Hello, $username 👋"
+        }
     }
 
     private fun setupRecyclerView() {

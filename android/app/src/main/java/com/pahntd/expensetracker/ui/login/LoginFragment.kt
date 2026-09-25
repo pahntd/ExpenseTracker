@@ -1,5 +1,6 @@
 package com.pahntd.expensetracker.ui.login
 
+import android.content.Context
 import android.os.Bundle
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
@@ -14,6 +15,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import com.pahntd.expensetracker.R
 import com.pahntd.expensetracker.databinding.FragmentLoginBinding
+import com.pahntd.expensetracker.utils.AppPreferences
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 
@@ -60,12 +62,28 @@ class LoginFragment : Fragment() {
                                 ).show()
                             }
 
-                            is LoginEvent.Success -> navigateToHome()
+                            is LoginEvent.Success -> {
+                                saveUsername(event.response.email)
+                                navigateToHome()
+                            }
                         }
                     }
                 }
             }
         }
+    }
+
+    /**
+     * Stores the Home greeting's display name - the part of the email before '@'. Falls back to
+     * the email the user typed if the server response has none.
+     */
+    private fun saveUsername(responseEmail: String?) {
+        val email = responseEmail ?: viewModel.uiState.value.email.trim()
+        requireContext()
+            .getSharedPreferences(AppPreferences.PREF_NAME, Context.MODE_PRIVATE)
+            .edit()
+            .putString(AppPreferences.KEY_USERNAME, email.substringBefore("@"))
+            .apply()
     }
 
     private fun navigateToHome() {
