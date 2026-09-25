@@ -91,7 +91,7 @@ fun PieChart.renderByCategory(categories: List<CategoryWithAmountSummary>) {
     val dataSet = PieDataSet(entries, "").apply {
         this.colors = colors
         // Ignored by the renderer when only one slice is visible, so a single category is a full ring.
-        sliceSpace = 2f
+        sliceSpace = 1f
         valueTextColor = Color.WHITE
         valueTextSize = 12f
         valueFormatter = object : ValueFormatter() {

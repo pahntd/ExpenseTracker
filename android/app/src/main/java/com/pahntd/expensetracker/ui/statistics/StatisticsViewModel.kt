@@ -57,7 +57,11 @@ class StatisticsViewModel @Inject constructor(
             } else {
                 loadInRange(timeFilter, range)
             }
-            _uiState.update { loaded.copy(monthlyTrend = it.monthlyTrend) }
+            _uiState.update { current ->
+                loaded.copy(
+                    monthlyTrend = current.monthlyTrend
+                )
+            }
         }
     }
 
