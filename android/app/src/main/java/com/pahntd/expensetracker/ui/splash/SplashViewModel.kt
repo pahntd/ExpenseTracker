@@ -9,6 +9,7 @@ import com.pahntd.expensetracker.data.network.NetworkMonitor
 import com.pahntd.expensetracker.data.network.NetworkState
 import com.pahntd.expensetracker.data.sync.SyncScheduler
 import com.pahntd.expensetracker.data.sync.SyncTrigger
+import com.pahntd.expensetracker.utils.AccountPreferencesCleaner
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -24,10 +25,11 @@ import javax.inject.Inject
  *  no local session                          -> [SplashDestination.Login]
  *  session exists, offline                   -> trust local session -> [SplashDestination.Home]
  *  session exists, online, refresh succeeds  -> update access token -> [SplashDestination.Home]
- *  session exists, online, refresh token invalid/expired (definitive) -> clearSession() -> [SplashDestination.Login]
+ *  session exists, online, refresh token invalid/expired (definitive) -> clearSession() + account prefs -> [SplashDestination.Login]
  *  session exists, online, refresh fails due to network/timeout/unknown error -> keep session -> [SplashDestination.Home]
  *
- * All persistence goes through [SessionManager]; this class never touches DataStore directly.
+ * Session persistence goes through [SessionManager]; this class never touches DataStore directly.
+ * Account-scoped preferences are cleared through [AccountPreferencesCleaner].
  *
  * Every path that lands on [SplashDestination.Home] also requests [SyncTrigger.STARTUP] via
  * [syncScheduler] - this only schedules background work (subject to WorkManager's own
@@ -40,6 +42,7 @@ class SplashViewModel @Inject constructor(
     private val authRepository: AuthRepository,
     private val networkMonitor: NetworkMonitor,
     private val syncScheduler: SyncScheduler,
+    private val accountPreferencesCleaner: AccountPreferencesCleaner,
 ) : ViewModel() {
 
     private val _destination = MutableStateFlow<SplashDestination?>(null)
@@ -79,6 +82,8 @@ class SplashViewModel @Inject constructor(
                     // there's no point keeping the session around.
                     RefreshResult.InvalidRefreshToken -> {
                         sessionManager.clearSession()
+                        // Forced logout: same account-scoped cleanup (incl. unlocks) as a manual one.
+                        accountPreferencesCleaner.clear()
                         _destination.value = SplashDestination.Login
                     }
                     // Couldn't reach the server, or got back something unexpected — this says

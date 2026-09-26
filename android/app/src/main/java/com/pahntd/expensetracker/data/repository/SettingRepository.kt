@@ -5,6 +5,7 @@ import com.pahntd.expensetracker.data.auth.session.SessionManager
 import com.pahntd.expensetracker.data.local.database.ExpenseDatabase
 import com.pahntd.expensetracker.data.sync.SyncScheduler
 import com.pahntd.expensetracker.data.sync.SyncStatusHolder
+import com.pahntd.expensetracker.utils.AccountPreferencesCleaner
 import javax.inject.Inject
 
 class SettingRepository @Inject constructor(
@@ -12,7 +13,8 @@ class SettingRepository @Inject constructor(
     private val authRepository: AuthRepository,
     private val sessionManager: SessionManager,
     private val syncScheduler: SyncScheduler,
-    private val syncStatusHolder: SyncStatusHolder
+    private val syncStatusHolder: SyncStatusHolder,
+    private val accountPreferencesCleaner: AccountPreferencesCleaner
 ) {
 
     /**
@@ -28,10 +30,11 @@ class SettingRepository @Inject constructor(
     /**
      * Logs the current local account out: cancels background sync (both the one-time work and the
      * periodic safety net - see [SyncScheduler.cancelPeriodicSync]), best-effort revokes the
-     * refresh token, wipes the local dataset, clears the session, then resets [syncStatusHolder]
-     * to `IDLE` - in that order, so cancelling sync happens before anything it reads (Room, the
-     * session) is torn down. Transactions are cleared before categories since a transaction can
-     * reference a category id (foreign key). The architecture is single-account, so this always
+     * refresh token, wipes the local dataset, clears the session and the account-scoped
+     * preferences ([AccountPreferencesCleaner], which also revokes every feature unlock), then
+     * resets [syncStatusHolder] to `IDLE` - in that order, so cancelling sync happens before
+     * anything it reads (Room, the session) is torn down. Transactions are cleared before
+     * categories since a transaction can reference a category id (foreign key). The architecture is single-account, so this always
      * clears the complete local dataset rather than scoping it (or [syncStatusHolder]) to a user
      * id - there is only ever one local account, so a plain reset to `IDLE` is enough; no
      * per-user `SyncState` is needed.
@@ -62,6 +65,7 @@ class SettingRepository @Inject constructor(
         database.categoryDao().deleteAll()
 
         sessionManager.clearSession()
+        accountPreferencesCleaner.clear()
 
         syncStatusHolder.reset()
     }

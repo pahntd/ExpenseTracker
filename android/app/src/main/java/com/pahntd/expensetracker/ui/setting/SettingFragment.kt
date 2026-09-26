@@ -81,8 +81,6 @@ class SettingFragment : Fragment() {
                         }
 
                         SettingEventState.LoggedOut -> {
-                            // Account-specific: don't let the next account see this name.
-                            preferences.edit().remove(AppPreferences.KEY_USERNAME).apply()
                             findNavController().navigate(
                                 SettingFragmentDirections.actionSettingsFragmentToSplashFragment()
                             )

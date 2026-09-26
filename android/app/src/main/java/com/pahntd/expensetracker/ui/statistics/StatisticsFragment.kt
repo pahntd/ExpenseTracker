@@ -125,9 +125,13 @@ class StatisticsFragment : Fragment() {
             requestUnlock(LockedFeature.MONTHLY_TREND)
         }
 
-        // Re-render on start, after each unlock, and again when the nearest unlock expires.
+        // Re-render on start, after each unlock or revoke (e.g. a forced logout while this screen
+        // is open), and again when the nearest unlock expires.
         viewLifecycleOwner.lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
+                launch {
+                    featureUnlockManager.unlockChanges().collect { lockStateRefresh.value++ }
+                }
                 lockStateRefresh.collectLatest {
                     while (true) {
                         renderLockState()

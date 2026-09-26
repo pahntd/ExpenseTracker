@@ -4,6 +4,7 @@ import com.pahntd.expensetracker.data.auth.session.SessionManager
 import com.pahntd.expensetracker.data.remote.api.TokenRefreshApi
 import com.pahntd.expensetracker.data.remote.dto.RefreshTokenRequest
 import com.pahntd.expensetracker.di.BareClient
+import com.pahntd.expensetracker.utils.AccountPreferencesCleaner
 import okhttp3.Authenticator
 import okhttp3.Request
 import okhttp3.Response
@@ -39,6 +40,7 @@ import javax.inject.Inject
 class AuthAuthenticator @Inject constructor(
     private val sessionManager: SessionManager,
     @BareClient private val tokenRefreshApi: TokenRefreshApi,
+    private val accountPreferencesCleaner: AccountPreferencesCleaner,
 ) : Authenticator {
 
     override fun authenticate(route: Route?, response: Response): Request? {
@@ -59,6 +61,7 @@ class AuthAuthenticator @Inject constructor(
             val refreshToken = sessionManager.getCurrentRefreshToken()
             if (refreshToken == null) {
                 sessionManager.clearSessionBlocking()
+                accountPreferencesCleaner.clear()
                 return null
             }
 
@@ -80,6 +83,7 @@ class AuthAuthenticator @Inject constructor(
 
             if (newAccessToken.isNullOrBlank()) {
                 sessionManager.clearSessionBlocking()
+                accountPreferencesCleaner.clear()
                 return null
             }
 
