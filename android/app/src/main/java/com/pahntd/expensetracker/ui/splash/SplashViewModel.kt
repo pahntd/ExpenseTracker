@@ -81,7 +81,7 @@ class SplashViewModel @Inject constructor(
                     // Backend definitively rejected the refresh token: it's unrecoverable, so
                     // there's no point keeping the session around.
                     RefreshResult.InvalidRefreshToken -> {
-                        sessionManager.clearSession()
+                        sessionManager.clearSessionAndRememberUser()
                         // Forced logout: same account-scoped cleanup (incl. unlocks) as a manual one.
                         accountPreferencesCleaner.clear()
                         _destination.value = SplashDestination.Login

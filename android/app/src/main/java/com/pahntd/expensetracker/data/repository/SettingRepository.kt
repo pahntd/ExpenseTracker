@@ -3,8 +3,6 @@ package com.pahntd.expensetracker.data.repository
 import com.pahntd.expensetracker.data.auth.AuthRepository
 import com.pahntd.expensetracker.data.auth.session.SessionManager
 import com.pahntd.expensetracker.data.local.database.ExpenseDatabase
-import com.pahntd.expensetracker.data.sync.SyncScheduler
-import com.pahntd.expensetracker.data.sync.SyncStatusHolder
 import com.pahntd.expensetracker.utils.AccountPreferencesCleaner
 import javax.inject.Inject
 
@@ -12,8 +10,7 @@ class SettingRepository @Inject constructor(
     private val database: ExpenseDatabase,
     private val authRepository: AuthRepository,
     private val sessionManager: SessionManager,
-    private val syncScheduler: SyncScheduler,
-    private val syncStatusHolder: SyncStatusHolder,
+    private val localAccountDataCleaner: LocalAccountDataCleaner,
     private val accountPreferencesCleaner: AccountPreferencesCleaner
 ) {
 
@@ -28,45 +25,38 @@ class SettingRepository @Inject constructor(
     }
 
     /**
-     * Logs the current local account out: cancels background sync (both the one-time work and the
-     * periodic safety net - see [SyncScheduler.cancelPeriodicSync]), best-effort revokes the
-     * refresh token, wipes the local dataset, clears the session and the account-scoped
-     * preferences ([AccountPreferencesCleaner], which also revokes every feature unlock), then
-     * resets [syncStatusHolder] to `IDLE` - in that order, so cancelling sync happens before
-     * anything it reads (Room, the session) is torn down. Transactions are cleared before
-     * categories since a transaction can reference a category id (foreign key). The architecture is single-account, so this always
-     * clears the complete local dataset rather than scoping it (or [syncStatusHolder]) to a user
-     * id - there is only ever one local account, so a plain reset to `IDLE` is enough; no
-     * per-user `SyncState` is needed.
+     * Logs the current local account out and leaves the device in a clean logged-out state:
+     * cancels background sync and wipes the local dataset ([LocalAccountDataCleaner.wipe] - sync
+     * is cancelled before anything it reads is torn down), best-effort revokes the refresh token,
+     * clears the account-scoped preferences ([AccountPreferencesCleaner], which also revokes every
+     * feature unlock), then clears the session and forgets the last user id
+     * ([SessionManager.clearSessionAndForgetUser]) - Room is already empty, so the next login has
+     * nothing to compare against and is treated as a new account.
      *
-     * The [syncStatusHolder] reset is explicit and unconditional - it does not rely on the
-     * just-cancelled sync coroutine to clean up after itself. [SyncManager.sync] already never
-     * writes a terminal `SYNCED`/`SYNC_FAILED`/`OFFLINE` once it observes cancellation (its
-     * `CancellationException` handler only ever sets `IDLE`, then rethrows), so once cancellation
-     * has actually been observed by that coroutine, no stale write can land after this point. The
-     * only residual window is between [SyncScheduler.cancelSync] being requested here and that
+     * The sync status reset inside [LocalAccountDataCleaner.wipe] is explicit and unconditional -
+     * it does not rely on the just-cancelled sync coroutine to clean up after itself.
+     * [SyncManager.sync] already never writes a terminal `SYNCED`/`SYNC_FAILED`/`OFFLINE` once it
+     * observes cancellation (its `CancellationException` handler only ever sets `IDLE`, then
+     * rethrows), so once cancellation has actually been observed by that coroutine, no stale write
+     * can land after this point. The only residual window is between
+     * [com.pahntd.expensetracker.data.sync.SyncScheduler.cancelSync] being requested and that
      * coroutine noticing it at its next suspension point (cooperative cancellation, not
-     * instantaneous) - calling `cancelSync()` first, as the very first step, minimizes it as much
-     * as this architecture reasonably can without adding new synchronization.
+     * instantaneous) - cancelling sync as the very first step minimizes it as much as this
+     * architecture reasonably can without adding new synchronization.
      *
-     * Network revocation never gates local cleanup - see [AuthRepository.logout] - and neither
-     * does any of this touch [com.pahntd.expensetracker.data.remote.authenticator.AuthAuthenticator]
-     * or token-refresh behavior, which are unrelated to logout.
+     * The refresh token is revoked before the session is cleared (the call needs it). Network
+     * revocation never gates local cleanup - see [AuthRepository.logout] - and neither does any
+     * of this touch [com.pahntd.expensetracker.data.remote.authenticator.AuthAuthenticator] or
+     * token-refresh behavior, which are unrelated to logout.
      */
     suspend fun logout() {
-        syncScheduler.cancelSync()
-        syncScheduler.cancelPeriodicSync()
+        localAccountDataCleaner.wipe()
 
         sessionManager.getCurrentRefreshToken()?.let { refreshToken ->
             authRepository.logout(refreshToken)
         }
 
-        database.transactionDao().deleteAll()
-        database.categoryDao().deleteAll()
-
-        sessionManager.clearSession()
         accountPreferencesCleaner.clear()
-
-        syncStatusHolder.reset()
+        sessionManager.clearSessionAndForgetUser()
     }
 }

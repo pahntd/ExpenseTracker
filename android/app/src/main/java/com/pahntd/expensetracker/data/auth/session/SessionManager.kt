@@ -4,6 +4,7 @@ import androidx.datastore.core.DataStore
 import com.pahntd.expensetracker.di.ApplicationScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
@@ -115,15 +116,39 @@ class SessionManager @Inject constructor(
         }
 
     /**
-     * Clears the local session by resetting the store to [Session.getDefaultInstance]. The
-     * DataStore file and the Tink keyset are left in place.
+     * Ends the local session by clearing both tokens, but keeps [Session.getUserId] as the
+     * "last user" (see [getLastUserId]). This is what the forced-logout paths (Splash, the
+     * authenticator) use: Room is not wiped there, so the next login must still be able to tell
+     * whether it is the same account. A retained user id alone never counts as a session -
+     * [observeSession] and the in-memory token caches only look at the tokens. The DataStore file
+     * and the Tink keyset are left in place.
      */
-    suspend fun clearSession() {
+    suspend fun clearSessionAndRememberUser() {
+        dataStore.updateData { current ->
+            Session.newBuilder()
+                .setUserId(current.userId)
+                .build()
+        }
+    }
+
+    /**
+     * Resets the store to [Session.getDefaultInstance], forgetting the last user id too. Used by
+     * manual logout, which has already wiped Room, so there is nothing left to protect.
+     */
+    suspend fun clearSessionAndForgetUser() {
         dataStore.updateData { Session.getDefaultInstance() }
     }
 
     /**
-     * Synchronous counterpart to [clearSession], for callers that cannot suspend.
+     * The user id of the last session saved on this device - still present after [clearSessionAndRememberUser],
+     * `null` after [clearSessionAndForgetUser] or if nobody has ever logged in. Login compares it
+     * with the new account to decide whether the local Room data belongs to that account.
+     */
+    suspend fun getLastUserId(): String? =
+        dataStore.data.first().userId.ifBlank { null }
+
+    /**
+     * Synchronous counterpart to [clearSessionAndRememberUser], for callers that cannot suspend.
      * [AuthAuthenticator][com.pahntd.expensetracker.data.remote.authenticator.AuthAuthenticator]
      * runs on an OkHttp thread, so this clears the in-memory tokens right away and clears
      * DataStore in the background on [applicationScope].
@@ -132,7 +157,7 @@ class SessionManager @Inject constructor(
         currentAccessToken = null
         currentRefreshToken = null
         applicationScope.launch {
-            clearSession()
+            clearSessionAndRememberUser()
         }
     }
 }

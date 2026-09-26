@@ -5,8 +5,10 @@ import androidx.lifecycle.viewModelScope
 import com.pahntd.expensetracker.data.auth.AuthRepository
 import com.pahntd.expensetracker.data.auth.LoginResult
 import com.pahntd.expensetracker.data.auth.session.SessionManager
+import com.pahntd.expensetracker.data.repository.LocalAccountDataCleaner
 import com.pahntd.expensetracker.data.sync.SyncScheduler
 import com.pahntd.expensetracker.data.sync.SyncTrigger
+import com.pahntd.expensetracker.utils.AccountPreferencesCleaner
 import com.pahntd.expensetracker.utils.AuthValidator
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -22,7 +24,9 @@ import javax.inject.Inject
 class LoginViewModel @Inject constructor(
     private val authRepository: AuthRepository,
     private val sessionManager: SessionManager,
-    private val syncScheduler: SyncScheduler
+    private val syncScheduler: SyncScheduler,
+    private val localAccountDataCleaner: LocalAccountDataCleaner,
+    private val accountPreferencesCleaner: AccountPreferencesCleaner
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(LoginUiState())
@@ -79,7 +83,9 @@ class LoginViewModel @Inject constructor(
                     is LoginResult.Success -> {
                         val response = result.response
                         try {
+                            prepareLocalStateFor(response.userId)
                             // Persist the session first; only report success once it is stored.
+                            // This also records response.userId as the new last user id.
                             sessionManager.saveSession(
                                 userId = response.userId,
                                 accessToken = response.accessToken,
@@ -113,6 +119,25 @@ class LoginViewModel @Inject constructor(
             } finally {
                 _uiState.update { it.copy(isLoading = false) }
             }
+        }
+    }
+
+    /**
+     * Runs before the new session is saved (and so before its sync is enqueued):
+     *
+     * - Account-scoped preferences are always reset: no previous username, default Statistics
+     *   time filter, every feature locked. Unlocks are never kept per user.
+     * - Room is wiped (sync cancelled first) unless the last user id on this device is exactly
+     *   [newUserId]. A forced logout keeps that id and leaves Room alone, so the same user logging
+     *   back in keeps their `PENDING_*` rows and the login sync pushes them to their own account;
+     *   a different user - or no known last user (fresh install, after a manual logout) - never
+     *   gets a session while another account's rows are still in Room.
+     */
+    private suspend fun prepareLocalStateFor(newUserId: String) {
+        val lastUserId = sessionManager.getLastUserId()
+        accountPreferencesCleaner.clear()
+        if (lastUserId != newUserId) {
+            localAccountDataCleaner.wipe()
         }
     }
 }
