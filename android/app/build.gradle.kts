@@ -23,6 +23,12 @@ android {
 
         // Single source of truth for the dev backend base URL. Must end with "/".
         buildConfigField("String", "BASE_URL", "\"http://192.168.43.103:8080/\"")
+
+        // AdMob: single source of truth for the app ID and ad unit IDs (read in code via AdsConfig).
+        // These are Google's public TEST IDs - override them for the release build before shipping.
+        buildConfigField("String", "ADMOB_APP_ID", "\"ca-app-pub-3940256099942544~3347511713\"")
+        buildConfigField("String", "ADMOB_BANNER_UNIT_ID", "\"ca-app-pub-3940256099942544/9214589741\"")
+        buildConfigField("String", "ADMOB_REWARDED_UNIT_ID", "\"ca-app-pub-3940256099942544/5224354917\"")
     }
 
     buildTypes {
@@ -107,6 +113,9 @@ dependencies {
     implementation(libs.tink.android)
     // Charts (Statistics)
     implementation(libs.mpandroidchart)
+    // Ads (Next-Gen Google Mobile Ads SDK + User Messaging Platform)
+    implementation(libs.ads.mobile.sdk)
+    implementation(libs.user.messaging.platform)
 
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)
