@@ -11,14 +11,19 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import com.pahntd.expensetracker.ads.BannerAdManager
 import com.pahntd.expensetracker.databinding.FragmentStatisticsBinding
 import com.pahntd.expensetracker.utils.AppPreferences
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 
 @AndroidEntryPoint
 class StatisticsFragment : Fragment() {
+
+    @Inject
+    lateinit var bannerAdManager: BannerAdManager
 
     private var _binding: FragmentStatisticsBinding? = null
     private val binding
@@ -47,6 +52,7 @@ class StatisticsFragment : Fragment() {
         setupChart()
         observeUiState()
         loadDataStatistic()
+        bannerAdManager.bind(binding.adContainer, viewLifecycleOwner)
     }
 
     private fun setupTimeFilter() {
