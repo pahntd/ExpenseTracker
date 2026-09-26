@@ -34,6 +34,13 @@ class FeatureUnlockManager @Inject constructor(
     /** Whether [feature] has an unexpired unlock right now. Expired or missing = locked. */
     fun isUnlocked(feature: LockedFeature): Boolean = remainingUnlockMillis(feature) > 0
 
+    /**
+     * Whether an unlock request is still waiting on its ad (the ad is on screen). A new
+     * [requestUnlock] made meanwhile would be ignored without any callback, so callers check this.
+     */
+    val isUnlockInProgress: Boolean
+        get() = rewardedAdManager.isShowingAd
+
     /** Milliseconds until [feature]'s unlock expires, or 0 if it is locked. */
     fun remainingUnlockMillis(feature: LockedFeature): Long {
         val expiresAt = preferences.getLong(keyFor(feature), 0L)

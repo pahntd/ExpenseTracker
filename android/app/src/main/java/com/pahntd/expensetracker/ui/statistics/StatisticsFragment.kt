@@ -162,6 +162,9 @@ class StatisticsFragment : Fragment() {
             lockStateRefresh.value++
             return
         }
+        // An ad from an earlier request is still up (e.g. this view was recreated meanwhile);
+        // its own callbacks restore the CTAs, and a second request would get no callback at all.
+        if (featureUnlockManager.isUnlockInProgress) return
 
         // One rewarded ad at a time: block both CTAs until this show resolves.
         setUnlockButtonsEnabled(false)
@@ -185,8 +188,12 @@ class StatisticsFragment : Fragment() {
 
     private fun setUnlockButtonsEnabled(enabled: Boolean) {
         val binding = _binding ?: return
-        binding.btnUnlockIncomeByCategory.isEnabled = enabled
-        binding.btnUnlockMonthlyTrend.isEnabled = enabled
+        // The Login-style background has no disabled state, so dim the whole button instead.
+        val alpha = if (enabled) 1f else DISABLED_CTA_ALPHA
+        listOf(binding.btnUnlockIncomeByCategory, binding.btnUnlockMonthlyTrend).forEach {
+            it.isEnabled = enabled
+            it.alpha = alpha
+        }
     }
 
     private fun showToast(message: String) {
@@ -219,5 +226,9 @@ class StatisticsFragment : Fragment() {
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
+    }
+
+    private companion object {
+        const val DISABLED_CTA_ALPHA = 0.5f
     }
 }

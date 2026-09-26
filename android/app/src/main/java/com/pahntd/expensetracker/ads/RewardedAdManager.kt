@@ -53,6 +53,10 @@ class RewardedAdManager @Inject constructor(
         }
     }
 
+    /** Whether a rewarded ad is currently on screen (its show has not resolved yet). */
+    val isShowingAd: Boolean
+        get() = isShowing
+
     /** Whether a non-expired rewarded ad is ready to show right now. */
     fun isAdAvailable(): Boolean {
         val ad = rewardedAd ?: return false

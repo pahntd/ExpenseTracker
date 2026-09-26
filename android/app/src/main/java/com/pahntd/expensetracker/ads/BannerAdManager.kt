@@ -18,9 +18,10 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 /**
- * Loads one anchored adaptive banner into a screen's ad container, scoped to that screen's view
- * lifecycle. The container starts `GONE` and is only shown once an ad has actually loaded, so a
- * missing SDK init, missing consent or a failed load simply leaves the screen as it was.
+ * Loads one standard (not "large", so it stays compact) anchored adaptive banner into a
+ * screen's ad container, scoped to that screen's view lifecycle. The container starts `GONE`
+ * and is only shown once an ad has actually loaded, so a missing SDK init, missing consent or a
+ * failed load simply leaves the screen as it was.
  *
  * One request per view lifecycle: the [AdView] is created, loaded and destroyed with the
  * fragment's view, so it never outlives (or leaks) the Activity it was inflated against.
@@ -46,7 +47,7 @@ class BannerAdManager @Inject constructor(
             adMobInitializer.isInitialized.first { it }
 
             val context = container.context
-            val adSize = AdSize.getLargeAnchoredAdaptiveBannerAdSize(
+            val adSize = AdSize.getCurrentOrientationAnchoredAdaptiveBannerAdSize(
                 context,
                 context.resources.configuration.screenWidthDp
             )

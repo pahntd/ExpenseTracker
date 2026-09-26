@@ -167,29 +167,15 @@
                         android:layout_marginTop="8dp"
                         android:gravity="center_horizontal"
                         android:orientation="vertical"
-                        android:paddingVertical="24dp">
+                        android:paddingVertical="16dp">
 
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Locked"
-                            android:textSize="16sp"
-                            android:textStyle="bold" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="4dp"
-                            android:gravity="center"
-                            android:text="Watch an ad to unlock for 3 hours" />
+                        <TextView style="@style/RewardedUnlockMessage" />
 
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/btnUnlockIncomeByCategory"
-                            style="@style/Widget.Material3.Button.TonalButton"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="12dp"
-                            android:text="Watch ad to unlock" />
+                            style="@style/RewardedUnlockButton"
+                            android:layout_marginTop="16dp"
+                            android:contentDescription="Optional: watch an ad to unlock Income by Category for 3 hours" />
 
                     </LinearLayout>
 
@@ -232,29 +218,15 @@
                         android:layout_marginTop="8dp"
                         android:gravity="center_horizontal"
                         android:orientation="vertical"
-                        android:paddingVertical="24dp">
+                        android:paddingVertical="16dp">
 
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Locked"
-                            android:textSize="16sp"
-                            android:textStyle="bold" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="4dp"
-                            android:gravity="center"
-                            android:text="Watch an ad to unlock for 3 hours" />
+                        <TextView style="@style/RewardedUnlockMessage" />
 
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/btnUnlockMonthlyTrend"
-                            style="@style/Widget.Material3.Button.TonalButton"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="12dp"
-                            android:text="Watch ad to unlock" />
+                            style="@style/RewardedUnlockButton"
+                            android:layout_marginTop="16dp"
+                            android:contentDescription="Optional: watch an ad to unlock the Income and Expense Monthly Trend for 3 hours" />
 
                     </LinearLayout>
 
