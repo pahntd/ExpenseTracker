@@ -7,3 +7,8 @@
 **/.externalNativeBuild/
 **/.cxx/
 .DS_Store
+
+# Environment files with real values (only the committed *.env.example templates are allowed)
+**/.env
+**/.env.*
+!**/.env.example

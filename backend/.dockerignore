@@ -16,6 +16,10 @@ local.properties
 *.tmp
 *.txt
 
+# Environment files must never enter the build context
+.env
+.env.*
+
 # Docker files themselves
 Dockerfile
 .dockerignore
