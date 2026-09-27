@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -6,6 +8,13 @@ plugins {
     alias(libs.plugins.navigation.safe.args)
     alias(libs.plugins.protobuf)
     kotlin("kapt")
+}
+
+val keystorePropertiesFile = rootProject.file("keystore.properties")
+val keystoreProperties = Properties()
+
+if (keystorePropertiesFile.exists()) {
+    keystoreProperties.load(keystorePropertiesFile.inputStream())
 }
 
 android {
@@ -21,9 +30,6 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
-        // Single source of truth for the dev backend base URL. Must end with "/".
-        buildConfigField("String", "BASE_URL", "\"http://192.168.43.103:8080/\"")
-
         // AdMob: single source of truth for the app ID and ad unit IDs (read in code via AdsConfig).
         // These are Google's public TEST IDs - override them for the release build before shipping.
         buildConfigField("String", "ADMOB_APP_ID", "\"ca-app-pub-3940256099942544~3347511713\"")
@@ -31,13 +37,29 @@ android {
         buildConfigField("String", "ADMOB_REWARDED_UNIT_ID", "\"ca-app-pub-3940256099942544/5224354917\"")
     }
 
+    signingConfigs {
+        create("release") {
+            storeFile = rootProject.file(keystoreProperties["storeFile"] as String)
+            storePassword = keystoreProperties["storePassword"] as String
+            keyAlias = keystoreProperties["keyAlias"] as String
+            keyPassword = keystoreProperties["keyPassword"] as String
+        }
+    }
+
+    // BASE_URL: single source of truth for the backend base URL, per build type. Must end with "/".
+    // Cleartext for the debug LAN host is allowed only by src/debug/res/xml/network_security_config.xml.
     buildTypes {
+        debug {
+            buildConfigField("String", "BASE_URL", "\"http://192.168.43.103:8080/\"")
+        }
         release {
+            buildConfigField("String", "BASE_URL", "\"https://expense-tracker-backend-lx3d.onrender.com/\"")
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            signingConfig = signingConfigs.getByName("release")
         }
     }
     compileOptions {
