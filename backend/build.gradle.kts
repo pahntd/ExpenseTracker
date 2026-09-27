@@ -16,6 +16,11 @@ application {
 kotlin {
     jvmToolchain(21)
 }
+
+// Tests start rootModule() without main(), so they need UTC set on the JVM directly.
+tasks.test {
+    jvmArgs("-Duser.timezone=UTC")
+}
 dependencies {
     implementation(ktorLibs.server.core)
     implementation(ktorLibs.server.netty)

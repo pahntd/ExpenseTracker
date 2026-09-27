@@ -38,20 +38,4 @@ class ExposedUserRepository : UserRepository {
             user
         }
     }
-
-    override fun findAll(): List<User> {
-        return transaction {
-            UserTable
-                .selectAll()
-                .map { row ->
-                    User(
-                        id = row[UserTable.id],
-                        email = row[UserTable.email],
-                        passwordHash = row[UserTable.passwordHash],
-                        createdAt = row[UserTable.createdAt],
-                        updatedAt = row[UserTable.updatedAt]
-                    )
-                }
-        }
-    }
 }

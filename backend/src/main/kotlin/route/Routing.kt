@@ -1,7 +1,5 @@
 package com.pahntd.expensetracker.route
 
-import com.pahntd.expensetracker.api.EchoRequest
-import com.pahntd.expensetracker.api.EchoResponse
 import com.pahntd.expensetracker.api.ErrorResponse
 import com.pahntd.expensetracker.api.HealthResponse
 import com.pahntd.expensetracker.api.LoginRequest
@@ -11,7 +9,6 @@ import com.pahntd.expensetracker.api.RefreshTokenRequest
 import com.pahntd.expensetracker.api.RefreshTokenResponse
 import com.pahntd.expensetracker.api.RegisterRequest
 import com.pahntd.expensetracker.api.RegisterResponse
-import com.pahntd.expensetracker.api.UserResponse
 import com.pahntd.expensetracker.auth.BCryptPasswordHasher
 import com.pahntd.expensetracker.auth.JwtConfig
 import com.pahntd.expensetracker.auth.RefreshTokenGenerator
@@ -23,7 +20,6 @@ import com.pahntd.expensetracker.repository.ExposedUserRepository
 import com.pahntd.expensetracker.service.AuthService
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.*
-import io.ktor.server.auth.authenticate
 import io.ktor.server.request.receive
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
@@ -36,33 +32,10 @@ fun Application.configureRouting() {
         categoryRoutes()
         transactionRoutes()
 
-        get("/") {
-            call.respondText("Hello, World!")
-        }
-
         get("/health") {
             call.respond(
                 HealthResponse(
                     status = "ok"
-                )
-            )
-        }
-
-        post("/health") {
-            call.respond(
-                HealthResponse(
-                    status = "OK"
-                )
-            )
-        }
-
-        post("/echo") {
-
-            val request = call.receive<EchoRequest>()
-
-            call.respond(
-                EchoResponse(
-                    message = request.message
                 )
             )
         }
@@ -95,25 +68,6 @@ fun Application.configureRouting() {
             )
 
         }
-        authenticate("auth-jwt") {
-            get("/users") {
-                val userRepository = ExposedUserRepository()
-                val users = userRepository.findAll()
-                call.respond(
-                    users.map { user ->
-                        UserResponse(
-                            id = user.id.toString(),
-                            email = user.email,
-                            passwordHash = user.passwordHash
-                        )
-                    }
-                )
-            }
-        }
-        /*
-          "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJleHBlbnNlLXRyYWNrZXIiLCJhdWQiOiJleHBlbnNlLXRyYWNrZXItYXBwIiwidXNlcklkIjoiY2YxMDFiODMtNTI1ZC00YTNkLWFiZWEtY2ZlY2ZkZDQ2ZDI3IiwiaWF0IjoxNzg4ODg4MDMyLCJleHAiOjE3ODg4ODg5MzJ9.RurmK9W_iwvkzKkq-x0l2dkRzeq1d4bbsVU6H6f3seo",
-    "refreshToken": "Bwc2cfilio_PQlnautO68-_31ntBW1w3I2lmdgTeJ1M"
-        * */
 
         post("/login") {
             val request = call.receive<LoginRequest>()
