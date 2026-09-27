@@ -7,8 +7,8 @@ import java.util.concurrent.TimeUnit
 
 /**
  * The one place ad configuration is read from. The IDs themselves live in `app/build.gradle.kts`
- * (Google's public test IDs during development); UI and business classes must go through this
- * object instead of hard-coding ad unit IDs.
+ * per build type (Google's public test IDs for debug, real IDs for release); UI and business
+ * classes must go through this object instead of hard-coding ad unit IDs.
  *
  * Ads are a presentation concern only: nothing in Room, sync, auth or statistic data loading may
  * depend on this package, so the core app keeps working when ads fail to load.
@@ -18,8 +18,8 @@ object AdsConfig {
     /** Passed to both the Next-Gen SDK ([AdMobInitializer]) and UMP ([AdsConsentManager]). */
     const val APP_ID: String = BuildConfig.ADMOB_APP_ID
 
-    const val BANNER_AD_UNIT_ID: String = BuildConfig.ADMOB_BANNER_UNIT_ID
-    const val REWARDED_AD_UNIT_ID: String = BuildConfig.ADMOB_REWARDED_UNIT_ID
+    const val BANNER_AD_UNIT_ID: String = BuildConfig.ADMOB_BANNER_AD_UNIT_ID
+    const val REWARDED_AD_UNIT_ID: String = BuildConfig.ADMOB_REWARDED_AD_UNIT_ID
 
     /** How long a successful rewarded-ad reward unlocks the requested feature. */
     val FEATURE_UNLOCK_DURATION_MILLIS: Long = TimeUnit.HOURS.toMillis(3)

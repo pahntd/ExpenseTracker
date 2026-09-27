@@ -27,6 +27,12 @@
             </intent-filter>
         </activity>
 
+        <!-- AdMob app ID, injected per build type from app/build.gradle.kts (debug = Google test
+             ID, release = real ID). The Next-Gen SDK and UMP also receive it in code via AdsConfig. -->
+        <meta-data
+            android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:value="${admobAppId}" />
+
         <!-- WorkManager is initialized manually via ExpenseApplication (Configuration.Provider)
              so it picks up the HiltWorkerFactory; the default androidx-startup initializer must
              be removed to avoid double-initialization. -->

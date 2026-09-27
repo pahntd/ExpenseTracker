@@ -22,4 +22,5 @@ fun Application.rootModule() {
     configureStatusPages()
     configureAuthentication()
     configureRouting()
+    // $env:JWT_SECRET="your-super-secret-key-for-local-development-only"
 }

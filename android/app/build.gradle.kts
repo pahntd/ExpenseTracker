@@ -17,6 +17,18 @@ if (keystorePropertiesFile.exists()) {
     keystoreProperties.load(keystorePropertiesFile.inputStream())
 }
 
+/** Sets one build type's AdMob IDs: BuildConfig fields for code + manifest placeholder for the app ID. */
+fun com.android.build.api.dsl.ApplicationBuildType.admob(
+    appId: String,
+    bannerAdUnitId: String,
+    rewardedAdUnitId: String
+) {
+    manifestPlaceholders["admobAppId"] = appId
+    buildConfigField("String", "ADMOB_APP_ID", "\"$appId\"")
+    buildConfigField("String", "ADMOB_BANNER_AD_UNIT_ID", "\"$bannerAdUnitId\"")
+    buildConfigField("String", "ADMOB_REWARDED_AD_UNIT_ID", "\"$rewardedAdUnitId\"")
+}
+
 android {
     namespace = "com.pahntd.expensetracker"
     compileSdk = 35
@@ -29,12 +41,6 @@ android {
         versionName = "1.0.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-
-        // AdMob: single source of truth for the app ID and ad unit IDs (read in code via AdsConfig).
-        // These are Google's public TEST IDs - override them for the release build before shipping.
-        buildConfigField("String", "ADMOB_APP_ID", "\"ca-app-pub-3940256099942544~3347511713\"")
-        buildConfigField("String", "ADMOB_BANNER_UNIT_ID", "\"ca-app-pub-3940256099942544/9214589741\"")
-        buildConfigField("String", "ADMOB_REWARDED_UNIT_ID", "\"ca-app-pub-3940256099942544/5224354917\"")
     }
 
     signingConfigs {
@@ -48,12 +54,26 @@ android {
 
     // BASE_URL: single source of truth for the backend base URL, per build type. Must end with "/".
     // Cleartext for the debug LAN host is allowed only by src/debug/res/xml/network_security_config.xml.
+    //
+    // AdMob: single source of truth for the app ID and ad unit IDs, per build type. Code reads them
+    // via AdsConfig; the app ID also reaches AndroidManifest.xml through the admobAppId placeholder.
+    // debug = Google's public TEST IDs, release = the real Expense Tracker IDs.
     buildTypes {
         debug {
             buildConfigField("String", "BASE_URL", "\"http://192.168.43.103:8080/\"")
+            admob(
+                appId = "ca-app-pub-3940256099942544~3347511713",
+                bannerAdUnitId = "ca-app-pub-3940256099942544/6300978111",
+                rewardedAdUnitId = "ca-app-pub-3940256099942544/5224354917"
+            )
         }
         release {
             buildConfigField("String", "BASE_URL", "\"https://expense-tracker-backend-lx3d.onrender.com/\"")
+            admob(
+                appId = "ca-app-pub-5720492551902022~5577716530",
+                bannerAdUnitId = "ca-app-pub-5720492551902022/4018232017",
+                rewardedAdUnitId = "ca-app-pub-5720492551902022/7003488007"
+            )
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
