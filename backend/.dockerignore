@@ -1,0 +1,21 @@
+# Build outputs and caches (the image builds its own)
+.gradle/
+.kotlin/
+build/
+out/
+
+# IDE / local machine files
+.idea/
+*.iml
+.vscode/
+local.properties
+.DS_Store
+
+# Logs, temp files, notes
+*.log
+*.tmp
+*.txt
+
+# Docker files themselves
+Dockerfile
+.dockerignore

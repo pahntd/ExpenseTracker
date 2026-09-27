@@ -15,5 +15,36 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql
 
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U expense_tracker -d expense_tracker"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  # LOCAL DEVELOPMENT ONLY. Every value below is a dev placeholder, never a production secret.
+  backend:
+    build: ./backend
+    image: expense-tracker-backend:local
+    container_name: expense-tracker-backend
+    restart: unless-stopped
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+    environment:
+      # production mode = fail fast if any DB variable is missing (same checks as a real deploy)
+      APP_ENV: production
+      PORT: "8080"
+      TZ: UTC
+      DATABASE_URL: jdbc:postgresql://postgres:5432/expense_tracker
+      DATABASE_USER: expense_tracker
+      DATABASE_PASSWORD: expense_tracker_dev_password
+      JWT_SECRET: local-dev-only-jwt-secret-do-not-use-in-production
+
+    ports:
+      - "8080:8080"
+
 volumes:
   postgres_data:
