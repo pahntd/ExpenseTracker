@@ -98,6 +98,7 @@ interface CategoryDao {
         categories.id AS categoryId,
         categories.name AS name,
         categories.icon AS icon,
+        categories.isDefault AS isDefault,
         COUNT(expenses.id) AS expenseCount
     FROM categories
     LEFT JOIN expenses

@@ -34,6 +34,8 @@ class AddExpenseFragment : Fragment() {
 
     private lateinit var categoryAdapter: ArrayAdapter<String>
 
+    private var isFormattingAmount = false
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -111,8 +113,24 @@ class AddExpenseFragment : Fragment() {
                 calendar.get(Calendar.DAY_OF_MONTH)
             ).show()
         }
-        binding.etAmount.doAfterTextChanged {
-            addExpenseViewModel.updateAmount(it.toString())
+        binding.etAmount.doAfterTextChanged { editable ->
+            if (isFormattingAmount) return@doAfterTextChanged
+
+            val input = editable?.toString().orEmpty()
+
+            val rawAmount = input.filter { it.isDigit() }
+            val formattedAmount = formatAmountInput(rawAmount)
+
+            if (input != formattedAmount) {
+                isFormattingAmount = true
+
+                binding.etAmount.setText(formattedAmount)
+                binding.etAmount.setSelection(formattedAmount.length)
+
+                isFormattingAmount = false
+            }
+
+            addExpenseViewModel.updateAmount(rawAmount)
         }
         binding.etTitle.doAfterTextChanged {
             addExpenseViewModel.updateNote(it.toString())
@@ -132,6 +150,20 @@ class AddExpenseFragment : Fragment() {
         binding.toolbar.setNavigationOnClickListener {
             findNavController().popBackStack()
         }
+    }
+
+    private fun formatAmountInput(value: String): String {
+        val digits = value.filter { it.isDigit() }
+
+        if (digits.isEmpty()) return ""
+
+        return digits
+            .trimStart('0')
+            .ifEmpty { "0" }
+            .reversed()
+            .chunked(3)
+            .joinToString(".")
+            .reversed()
     }
 
     private fun renderEditData(expense: ExpenseWithCategory) {

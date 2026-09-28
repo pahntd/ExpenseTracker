@@ -34,6 +34,19 @@ class CategoryRecyclerViewAdapter(
             binding.btnDeleteCate.setOnClickListener {
                 onClickDelete(item)
             }
+            if (item.isDefault) {
+                binding.btnEditCate.isEnabled = false
+                binding.btnEditCate.alpha = 0.3f
+
+                binding.btnDeleteCate.isEnabled = false
+                binding.btnDeleteCate.alpha = 0.3f
+            }else {
+                binding.btnEditCate.isEnabled = true
+                binding.btnEditCate.alpha = 1.0f
+
+                binding.btnDeleteCate.isEnabled = true
+                binding.btnDeleteCate.alpha = 1.0f
+            }
         }
     }
 

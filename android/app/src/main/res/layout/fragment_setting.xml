@@ -68,7 +68,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:text="Version 1.0.0"
+            android:text="Version 2.0.0"
             android:textSize="14sp" />
 
         <TextView
@@ -86,13 +86,14 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="32dp"
-            android:background="?attr/selectableItemBackground"
+            android:background="@drawable/bg_button_ripple"
             android:clickable="true"
             android:focusable="true"
             android:gravity="center"
             android:paddingVertical="12dp"
-            android:paddingRight="12dp"
+            android:paddingHorizontal="24dp"
             android:text="Logout"
+            android:textStyle="bold"
             android:textColor="@color/red"
             android:textSize="16sp" />
 

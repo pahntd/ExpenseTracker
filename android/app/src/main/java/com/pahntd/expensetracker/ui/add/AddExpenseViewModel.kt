@@ -1,5 +1,6 @@
 package com.pahntd.expensetracker.ui.add
 
+import android.text.TextUtils.replace
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -120,12 +121,12 @@ class AddExpenseViewModel @Inject constructor(
                     return@launch
                 }
 
-                state.amount.toDoubleOrNull() == null -> {
+                state.amount.replace(".", "").toDoubleOrNull() == null -> {
                     _eventState.emit(AddExpenseEventState.Error("Amount must be a valid number"))
                     return@launch
                 }
 
-                state.amount.toDouble() <= 0 -> {
+                state.amount.replace(".", "").toDouble() <= 0 -> {
                     _eventState.emit(AddExpenseEventState.Error("Amount must be greater than 0"))
                     return@launch
                 }
@@ -133,7 +134,7 @@ class AddExpenseViewModel @Inject constructor(
 
             val transaction = TransactionEntity(
 
-                amount = state.amount.toDouble(),
+                amount = state.amount.replace(".", "").toDouble(),
 
                 type = state.type,
 

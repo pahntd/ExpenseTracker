@@ -1,10 +1,12 @@
 package com.pahntd.expensetracker
 
+import android.content.pm.ActivityInfo
 import android.os.Bundle
 import android.view.View
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.navigation.fragment.NavHostFragment
+import androidx.navigation.ui.setupWithNavController
 import com.pahntd.expensetracker.ads.AdMobInitializer
 import com.pahntd.expensetracker.databinding.ActivityMainBinding
 import dagger.hilt.android.AndroidEntryPoint
@@ -26,6 +28,7 @@ class MainActivity : AppCompatActivity() {
         setupNavigation()
         // Fire-and-forget: consent + SDK init run asynchronously and never gate the app.
         adMobInitializer.start(this)
+        setScreenOrientation()
     }
 
     private fun setupNavigation() {
@@ -33,6 +36,12 @@ class MainActivity : AppCompatActivity() {
             supportFragmentManager.findFragmentById(R.id.navHostFragment) as NavHostFragment
 
         val navController = navHostFragment.navController
+
+        binding.bottomNavigation.setupWithNavController(navController)
+
+        binding.bottomNavigation.setOnItemReselectedListener {
+            // Do nothing when the current tab is tapped again
+        }
 
         navController.addOnDestinationChangedListener { _, destination, _ ->
             val shouldShow = destination.id in setOf(
@@ -42,17 +51,6 @@ class MainActivity : AppCompatActivity() {
                 R.id.settingsFragment
             )
             setBottomBarVisible(shouldShow)
-        }
-
-        binding.bottomNavigation.setOnItemSelectedListener { item ->
-            if (navController.currentDestination?.id == item.itemId) {
-                return@setOnItemSelectedListener true
-            }
-            while (navController.popBackStack()) {
-                // Clear navigation back stack
-            }
-            navController.navigate(item.itemId)
-            true
         }
     }
 
@@ -78,6 +76,14 @@ class MainActivity : AppCompatActivity() {
                     bottomBar.visibility = View.GONE
                 }
                 .start()
+        }
+    }
+
+    private fun setScreenOrientation() {
+        requestedOrientation = if (resources.configuration.smallestScreenWidthDp < 600) {
+            ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+        } else {
+            ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
         }
     }
 }

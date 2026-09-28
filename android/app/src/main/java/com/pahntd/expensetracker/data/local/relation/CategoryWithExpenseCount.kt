@@ -4,5 +4,6 @@ data class CategoryWithExpenseCount(
     val categoryId: String,
     val name: String,
     val icon: String,
+    val isDefault: Boolean,
     val expenseCount: Int
 )
