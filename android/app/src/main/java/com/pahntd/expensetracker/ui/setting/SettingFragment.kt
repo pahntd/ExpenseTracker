@@ -9,14 +9,17 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatDelegate
+import androidx.core.view.isVisible
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
+import com.pahntd.expensetracker.ads.AdsConsentManager
 import com.pahntd.expensetracker.databinding.FragmentSettingBinding
 import com.pahntd.expensetracker.utils.AppPreferences
 import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
 import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
@@ -34,6 +37,12 @@ class SettingFragment : Fragment() {
     }
 
     private val viewModel: SettingViewModel by viewModels()
+
+    @Inject
+    lateinit var adsConsentManager: AdsConsentManager
+
+    /** Blocks a second tap from requesting the form again while it is already opening/open. */
+    private var isPrivacyOptionsFormShowing = false
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -60,6 +69,31 @@ class SettingFragment : Fragment() {
     private fun setupClick() {
         binding.tvLogout.setOnClickListener {
             viewModel.onLogoutClick()
+        }
+        binding.tvPrivacyOptions.setOnClickListener {
+            showPrivacyOptionsForm()
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // Re-read on every resume: the requirement status is only known once the consent info
+        // update started from MainActivity has completed, which may be after this view exists.
+        updatePrivacyOptionsVisibility()
+    }
+
+    private fun updatePrivacyOptionsVisibility() {
+        val binding = _binding ?: return
+        binding.layoutPrivacy.isVisible = adsConsentManager.isPrivacyOptionsRequired()
+    }
+
+    private fun showPrivacyOptionsForm() {
+        if (isPrivacyOptionsFormShowing) return
+        isPrivacyOptionsFormShowing = true
+        adsConsentManager.showPrivacyOptionsForm(requireActivity()) {
+            // May arrive after this view is gone, so the view is only touched through _binding.
+            isPrivacyOptionsFormShowing = false
+            updatePrivacyOptionsVisibility()
         }
     }
 
