@@ -2,8 +2,10 @@ package com.pahntd.expensetracker.data.repository
 
 import com.pahntd.expensetracker.data.auth.AuthRepository
 import com.pahntd.expensetracker.data.auth.DeleteAccountResult
+import com.pahntd.expensetracker.data.auth.RefreshResult
 import com.pahntd.expensetracker.data.auth.session.SessionManager
 import com.pahntd.expensetracker.data.local.database.ExpenseDatabase
+import com.pahntd.expensetracker.data.sync.SyncScheduler
 import com.pahntd.expensetracker.utils.AccountPreferencesCleaner
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.withContext
@@ -14,7 +16,8 @@ class SettingRepository @Inject constructor(
     private val authRepository: AuthRepository,
     private val sessionManager: SessionManager,
     private val localAccountDataCleaner: LocalAccountDataCleaner,
-    private val accountPreferencesCleaner: AccountPreferencesCleaner
+    private val accountPreferencesCleaner: AccountPreferencesCleaner,
+    private val syncScheduler: SyncScheduler
 ) {
 
     /**
@@ -69,21 +72,83 @@ class SettingRepository @Inject constructor(
      * cleared, and the session cleared with the last user id forgotten, so login's same-user
      * shortcut can never hand the deleted account's rows to anyone.
      *
-     * Any non-success result returns without touching local state. Unlike [logout] there is no
+     * Background sync is paused and cancelled *before* the request
+     * ([SyncScheduler.pauseForAccountDeletion]), so no pass pushes or pulls for this account while
+     * it is being deleted and no new one can be scheduled. The `finally` always lifts the pause:
+     * re-arming sync when the account still exists (any failure, or the caller being cancelled
+     * mid-request), and leaving it un-armed after a deletion - there is no session left, and the
+     * next login re-arms it.
+     *
+     * Ambiguous answers are resolved through the existing auth endpoints rather than guessed (see
+     * [resolve]). Every remaining failure leaves Room untouched. Unlike [logout] there is no
      * refresh-token revocation: the backend already deleted every refresh token of the account.
      *
      * Cleanup runs [NonCancellable]: once the server has deleted the account, leaving the screen
      * (and cancelling the caller's scope) must not strand a half-cleared local session.
      */
     suspend fun deleteAccount(): DeleteAccountResult {
-        val result = authRepository.deleteAccount()
-        if (result == DeleteAccountResult.Success) {
-            withContext(NonCancellable) {
-                localAccountDataCleaner.wipe()
-                clearAccountPreferencesAndForgetUser()
+        syncScheduler.pauseForAccountDeletion()
+        var accountDeleted = false
+        try {
+            val result = resolve(authRepository.deleteAccount())
+            when (result) {
+                DeleteAccountResult.Success -> {
+                    accountDeleted = true
+                    withContext(NonCancellable) {
+                        localAccountDataCleaner.wipe()
+                        clearAccountPreferencesAndForgetUser()
+                    }
+                }
+                // AuthAuthenticator already ended the session (in memory, persisting in the
+                // background) and cleared account prefs - the same forced logout as anywhere else.
+                // Persist it before the caller navigates, so Splash reliably sees no session.
+                // Room is kept, as on every forced logout: a 401 alone never proves deletion.
+                DeleteAccountResult.SessionExpired -> sessionManager.clearSessionAndRememberUser()
+                else -> Unit
+            }
+            return result
+        } finally {
+            syncScheduler.resumeAfterAccountDeletion(rearm = !accountDeleted)
+        }
+    }
+
+    /**
+     * Narrows the two DELETE /account outcomes whose meaning depends on more than the status code:
+     *
+     * - [DeleteAccountResult.AccountNotFound] (404): the access token was accepted but the backend
+     *   has no such account - the expected answer when retrying after an earlier DELETE whose
+     *   response was lost. A 404 alone could also be a missing route, so it is confirmed through
+     *   the existing refresh endpoint: the backend deletes every refresh token with the account,
+     *   so a definitively rejected refresh token plus this 404 means the account is gone ->
+     *   [DeleteAccountResult.Success]. A refresh that still works means the account exists.
+     * - [DeleteAccountResult.SessionExpired] (unrecoverable 401): only a real session end if
+     *   [com.pahntd.expensetracker.data.remote.authenticator.AuthAuthenticator] actually cleared
+     *   the tokens. It deliberately keeps them when the refresh call itself hit a network error,
+     *   and that is reported as [DeleteAccountResult.NetworkError] instead.
+     */
+    private suspend fun resolve(result: DeleteAccountResult): DeleteAccountResult = when (result) {
+        DeleteAccountResult.AccountNotFound -> {
+            val refreshToken = sessionManager.getCurrentRefreshToken()
+            if (refreshToken == null) {
+                DeleteAccountResult.SessionExpired
+            } else {
+                when (authRepository.refresh(refreshToken)) {
+                    RefreshResult.InvalidRefreshToken -> DeleteAccountResult.Success
+                    RefreshResult.NetworkError -> DeleteAccountResult.NetworkError
+                    is RefreshResult.Success,
+                    RefreshResult.UnknownError -> DeleteAccountResult.UnknownError
+                }
             }
         }
-        return result
+
+        DeleteAccountResult.SessionExpired ->
+            if (sessionManager.getCurrentRefreshToken() == null) {
+                DeleteAccountResult.SessionExpired
+            } else {
+                DeleteAccountResult.NetworkError
+            }
+
+        else -> result
     }
 
     /** Shared tail of [logout] and [deleteAccount]; Room must already be wiped. */

@@ -22,8 +22,9 @@ sealed interface DeleteAccountResult {
 
     /**
      * 404: the token was accepted but the backend has no account for it - typically because an
-     * earlier deletion succeeded but its response never arrived. Not treated as success, since a
-     * 404 alone does not prove which request deleted what.
+     * earlier deletion succeeded but its response never arrived. Not success on its own (a 404 can
+     * also mean a missing route); [com.pahntd.expensetracker.data.repository.SettingRepository]
+     * confirms it through the refresh endpoint before treating the account as gone.
      */
     data object AccountNotFound : DeleteAccountResult
 

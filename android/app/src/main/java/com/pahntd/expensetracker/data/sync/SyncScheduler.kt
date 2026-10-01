@@ -4,16 +4,30 @@ import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.ExistingWorkPolicy
 import androidx.work.WorkManager
 import javax.inject.Inject
+import javax.inject.Singleton
 
 /**
  * Single entry point for requesting a sync pass. Every trigger source (login, app startup,
  * manual refresh, reconnect, periodic, ...) calls [enqueueSync] instead of talking to
  * [WorkManager] directly, so all of them converge on the same [UNIQUE_SYNC_WORK_NAME] unique
  * work instead of each spinning up its own concurrent [SyncWorker] run.
+ *
+ * `@Singleton` only so every trigger source sees the same [isPausedForAccountDeletion] gate.
  */
+@Singleton
 class SyncScheduler @Inject constructor(
     private val workManager: WorkManager
 ) {
+
+    /**
+     * Set for the duration of a DELETE /account request (see [pauseForAccountDeletion]). While
+     * set, [enqueueSync] and [schedulePeriodicSync] are no-ops, so no trigger source (reconnect,
+     * Home refresh, the periodic worker, ...) can start a new pass for the account being deleted.
+     * In-memory on purpose: after process death the deletion outcome is decided again by the
+     * normal startup flow (Splash refresh), and [SyncWorker]'s own session check still applies.
+     */
+    @Volatile
+    private var isPausedForAccountDeletion = false
 
     /**
      * Requests a sync pass for [trigger]. [ExistingWorkPolicy.KEEP] means this is a no-op
@@ -23,6 +37,7 @@ class SyncScheduler @Inject constructor(
      * state is tracked here or anywhere else.
      */
     fun enqueueSync(trigger: SyncTrigger) {
+        if (isPausedForAccountDeletion) return
         workManager.enqueueUniqueWork(
             UNIQUE_SYNC_WORK_NAME,
             ExistingWorkPolicy.KEEP,
@@ -54,6 +69,7 @@ class SyncScheduler @Inject constructor(
      * like [enqueueSync]'s triggers are.
      */
     fun schedulePeriodicSync() {
+        if (isPausedForAccountDeletion) return
         workManager.enqueueUniquePeriodicWork(
             UNIQUE_PERIODIC_SYNC_WORK_NAME,
             ExistingPeriodicWorkPolicy.KEEP,
@@ -71,6 +87,36 @@ class SyncScheduler @Inject constructor(
      */
     fun cancelPeriodicSync() {
         workManager.cancelUniqueWork(UNIQUE_PERIODIC_SYNC_WORK_NAME)
+    }
+
+    /**
+     * Called right before DELETE /account: blocks new scheduling, then cancels this app's only two
+     * account-sync jobs by their unique names - the one-time [UNIQUE_SYNC_WORK_NAME] work (which
+     * also drops any `Result.retry()` backoff waiting under that name, since a retry is the same
+     * work item) and the [UNIQUE_PERIODIC_SYNC_WORK_NAME] trigger. Nothing else in WorkManager is
+     * touched. A [SyncWorker] that is already running is stopped cooperatively: its coroutine is
+     * cancelled, which also cancels the in-flight Retrofit/OkHttp call.
+     *
+     * Must always be paired with [resumeAfterAccountDeletion].
+     */
+    fun pauseForAccountDeletion() {
+        isPausedForAccountDeletion = true
+        cancelSync()
+        cancelPeriodicSync()
+    }
+
+    /**
+     * Lifts the [pauseForAccountDeletion] gate. [rearm] puts sync back the way it was before the
+     * deletion attempt (periodic safety net plus one pass for anything the cancelled work had not
+     * pushed yet) - used when the account was not deleted. After a successful deletion it is
+     * `false`: there is no session left, and the next login re-arms sync itself.
+     */
+    fun resumeAfterAccountDeletion(rearm: Boolean) {
+        isPausedForAccountDeletion = false
+        if (rearm) {
+            schedulePeriodicSync()
+            enqueueSync(SyncTrigger.MANUAL)
+        }
     }
 
     companion object {

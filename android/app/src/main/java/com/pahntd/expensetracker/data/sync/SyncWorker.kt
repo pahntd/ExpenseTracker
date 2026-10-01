@@ -4,8 +4,10 @@ import android.content.Context
 import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
+import com.pahntd.expensetracker.data.auth.session.SessionManager
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
+import kotlinx.coroutines.flow.first
 
 /**
  * Thin WorkManager entry point for sync: it owns no sync logic itself, only delegates to
@@ -19,10 +21,18 @@ import dagger.assisted.AssistedInject
 class SyncWorker @AssistedInject constructor(
     @Assisted appContext: Context,
     @Assisted workerParams: WorkerParameters,
-    private val syncManager: SyncManager
+    private val syncManager: SyncManager,
+    private val sessionManager: SessionManager
 ) : CoroutineWorker(appContext, workerParams) {
 
     override suspend fun doWork(): Result {
+        // Every sync request needs an authenticated session. Without one (after logout, a forced
+        // logout, or account deletion) a stale or late-scheduled run must not act on whatever
+        // account last used this device - and could only produce 401s anyway.
+        if (sessionManager.observeSession().first() == null) {
+            return Result.success()
+        }
+
         val trigger = inputData.getString(KEY_TRIGGER)
             ?.let { name -> runCatching { SyncTrigger.valueOf(name) }.getOrNull() }
             ?: SyncTrigger.MANUAL

@@ -73,6 +73,14 @@ class SettingViewModel @Inject constructor(
                     DeleteAccountResult.Success ->
                         _uiState.update { it.copy(isDeletingAccount = false, isAccountDeleted = true) }
 
+                    // The session is gone (forced logout) - staying on Settings would leave an
+                    // unauthenticated user inside the app, so leave through the logout route.
+                    DeleteAccountResult.SessionExpired -> {
+                        _uiState.update { it.copy(isDeletingAccount = false) }
+                        _eventState.emit(SettingEventState.Error(result.toErrorMessage()))
+                        _eventState.emit(SettingEventState.LoggedOut)
+                    }
+
                     else -> {
                         _uiState.update { it.copy(isDeletingAccount = false) }
                         _eventState.emit(SettingEventState.Error(result.toErrorMessage()))
@@ -94,14 +102,16 @@ class SettingViewModel @Inject constructor(
     }
 
     private fun DeleteAccountResult.toErrorMessage(): String = when (this) {
+        // Deliberately not "was not deleted": a lost response can hide a deletion that succeeded.
+        // Retrying is safe - a retry after a hidden success is recognised and completes cleanup.
         DeleteAccountResult.NetworkError ->
-            "Unable to reach the server. Your account was not deleted. Check your connection and try again."
+            "Couldn't confirm the deletion. Check your connection and try again."
         DeleteAccountResult.SessionExpired ->
-            "Your session has expired. Please log in again, then retry."
-        DeleteAccountResult.AccountNotFound ->
-            "This account no longer exists on the server. Log out to finish removing it from this device."
+            "Your session has expired. Please log in again."
         DeleteAccountResult.ServerError ->
             "The server could not delete your account. Please try again later."
+        // AccountNotFound never reaches here: SettingRepository resolves it to another result.
+        DeleteAccountResult.AccountNotFound,
         DeleteAccountResult.UnknownError,
         DeleteAccountResult.Success ->
             "Something went wrong. Please try again."
