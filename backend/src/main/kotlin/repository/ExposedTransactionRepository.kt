@@ -120,6 +120,12 @@ class ExposedTransactionRepository : TransactionRepository {
         }
     }
 
+    override fun deleteAllByUserId(userId: Uuid): Int {
+        return transaction {
+            TransactionTable.deleteWhere { TransactionTable.userId eq userId }
+        }
+    }
+
     private fun ResultRow.toTransaction(): Transaction {
         return Transaction(
             id = this[TransactionTable.id],

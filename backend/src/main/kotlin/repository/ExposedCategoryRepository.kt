@@ -110,6 +110,12 @@ class ExposedCategoryRepository : CategoryRepository {
         }
     }
 
+    override fun deleteAllByUserId(userId: Uuid): Int {
+        return transaction {
+            CategoryTable.deleteWhere { CategoryTable.userId eq userId }
+        }
+    }
+
     private fun ResultRow.toCategory(): Category {
         return Category(
             id = this[CategoryTable.id],

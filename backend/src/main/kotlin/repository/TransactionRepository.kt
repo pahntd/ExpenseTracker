@@ -35,4 +35,6 @@ interface TransactionRepository {
     ): Transaction?
 
     fun delete(id: Uuid, userId: Uuid): Boolean
+
+    fun deleteAllByUserId(userId: Uuid): Int
 }

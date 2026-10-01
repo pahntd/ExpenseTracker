@@ -30,4 +30,6 @@ interface CategoryRepository {
     ): Category?
 
     fun delete(id: Uuid, userId: Uuid): Boolean
+
+    fun deleteAllByUserId(userId: Uuid): Int
 }

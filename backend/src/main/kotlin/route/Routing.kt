@@ -31,6 +31,7 @@ fun Application.configureRouting() {
     routing {
         categoryRoutes()
         transactionRoutes()
+        accountRoutes()
 
         get("/health") {
             call.respond(
