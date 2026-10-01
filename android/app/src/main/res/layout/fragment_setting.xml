@@ -129,6 +129,24 @@
             android:textColor="@color/red"
             android:textSize="16sp" />
 
+        <!-- Delete Account: permanent, server-side -->
+
+        <TextView
+            android:id="@+id/tvDeleteAccount"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:background="@drawable/bg_button_ripple"
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="center"
+            android:paddingVertical="12dp"
+            android:paddingHorizontal="24dp"
+            android:text="@string/settings_delete_account"
+            android:textStyle="bold"
+            android:textColor="@color/red"
+            android:textSize="16sp" />
+
     </LinearLayout>
 
 </ScrollView>

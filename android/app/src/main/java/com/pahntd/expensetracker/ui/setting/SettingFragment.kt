@@ -9,12 +9,14 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatDelegate
+import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
+import com.pahntd.expensetracker.R
 import com.pahntd.expensetracker.ads.AdsConsentManager
 import com.pahntd.expensetracker.databinding.FragmentSettingBinding
 import com.pahntd.expensetracker.utils.AppPreferences
@@ -56,6 +58,7 @@ class SettingFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         setupDarkMode()
         setupClick()
+        observeState()
         observeEvent()
     }
 
@@ -72,6 +75,9 @@ class SettingFragment : Fragment() {
         }
         binding.tvPrivacyOptions.setOnClickListener {
             showPrivacyOptionsForm()
+        }
+        binding.tvDeleteAccount.setOnClickListener {
+            showDeleteAccountDialog()
         }
     }
 
@@ -95,6 +101,47 @@ class SettingFragment : Fragment() {
             isPrivacyOptionsFormShowing = false
             updatePrivacyOptionsVisibility()
         }
+    }
+
+    private fun observeState() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.uiState.collect { state ->
+                    renderState(state)
+                    if (state.isAccountDeleted) {
+                        navigateToSplashAfterAccountDeleted()
+                    }
+                }
+            }
+        }
+    }
+
+    private fun renderState(state: SettingUiState) {
+        val isBusy = state.isDeletingAccount || state.isAccountDeleted
+        binding.tvDeleteAccount.isEnabled = !isBusy
+        binding.tvDeleteAccount.alpha = if (isBusy) DISABLED_ALPHA else 1f
+        binding.tvDeleteAccount.setText(
+            if (state.isDeletingAccount) R.string.settings_deleting_account
+            else R.string.settings_delete_account
+        )
+        binding.tvLogout.isEnabled = !isBusy
+        binding.tvLogout.alpha = if (isBusy) DISABLED_ALPHA else 1f
+    }
+
+    /**
+     * Same destination and back-stack clearing as logout: the action pops the whole graph, and
+     * Splash (no session left) forwards to Login while popping itself, so Login ends up alone on
+     * the back stack. Guarded so a re-collected state can't navigate twice.
+     */
+    private fun navigateToSplashAfterAccountDeleted() {
+        val navController = findNavController()
+        if (navController.currentDestination?.id != R.id.settingsFragment) return
+        Toast.makeText(
+            requireContext(),
+            R.string.settings_account_deleted,
+            Toast.LENGTH_SHORT
+        ).show()
+        navController.navigate(SettingFragmentDirections.actionSettingsFragmentToSplashFragment())
     }
 
     private fun observeEvent() {
@@ -149,6 +196,21 @@ class SettingFragment : Fragment() {
             .show()
     }
 
+    private fun showDeleteAccountDialog() {
+        AlertDialog.Builder(requireContext())
+            .setTitle(R.string.settings_delete_account_dialog_title)
+            .setMessage(R.string.settings_delete_account_dialog_message)
+            .setNegativeButton(R.string.settings_delete_account_cancel, null)
+            // AlertDialog dismisses itself on click, and the ViewModel ignores the call while a
+            // deletion is already running, so this can never start a second request.
+            .setPositiveButton(R.string.settings_delete_account_confirm) { _, _ ->
+                viewModel.onDeleteAccountConfirmed()
+            }
+            .show()
+            .getButton(AlertDialog.BUTTON_POSITIVE)
+            .setTextColor(ContextCompat.getColor(requireContext(), R.color.red))
+    }
+
 //    private fun showAlertDialog() {
 //        AlertDialog.Builder(requireContext())
 //            .setTitle("Delete All Data ?")
@@ -188,6 +250,10 @@ class SettingFragment : Fragment() {
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
+    }
+
+    private companion object {
+        const val DISABLED_ALPHA = 0.5f
     }
 
 }

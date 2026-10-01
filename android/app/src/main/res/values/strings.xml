@@ -2,6 +2,13 @@
     <string name="app_name">Expense Tracker</string>
     <string name="settings_section_privacy">Privacy</string>
     <string name="settings_privacy_options">Privacy options</string>
+    <string name="settings_delete_account">Delete Account</string>
+    <string name="settings_deleting_account">Deleting account…</string>
+    <string name="settings_delete_account_dialog_title">Delete account?</string>
+    <string name="settings_delete_account_dialog_message">Your account will be permanently deleted, along with all of its transactions and categories on the server.\n\nThis cannot be undone.</string>
+    <string name="settings_delete_account_cancel">Cancel</string>
+    <string name="settings_delete_account_confirm">Delete Account</string>
+    <string name="settings_account_deleted">Your account has been deleted</string>
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
 </resources>

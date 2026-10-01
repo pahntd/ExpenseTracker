@@ -4,6 +4,8 @@ import com.pahntd.expensetracker.data.remote.dto.RegisterRequest
 import com.pahntd.expensetracker.data.remote.api.AuthApi
 import com.pahntd.expensetracker.data.remote.dto.LoginRequest
 import com.pahntd.expensetracker.data.remote.dto.RefreshTokenRequest
+import com.pahntd.expensetracker.data.remote.error.AppError
+import com.pahntd.expensetracker.data.remote.error.toAppError
 import retrofit2.HttpException
 import java.io.IOException
 import java.util.concurrent.CancellationException
@@ -95,5 +97,38 @@ class AuthRepository @Inject constructor(
         } catch (e: Exception) {
             // Best effort - see kdoc above.
         }
+    }
+
+    /**
+     * DELETE /account for the currently authenticated user. It goes through the regular
+     * authenticated client, so an expired access token is refreshed and the request retried by
+     * [com.pahntd.expensetracker.data.remote.authenticator.AuthAuthenticator] like any other call;
+     * only a 401 it could not recover surfaces as [DeleteAccountResult.SessionExpired].
+     *
+     * Only a 2xx is [DeleteAccountResult.Success]. A network failure never counts as success: the
+     * request may or may not have reached the server, so the caller must keep local data.
+     */
+    suspend fun deleteAccount(): DeleteAccountResult {
+        return try {
+            val response = authApi.deleteAccount()
+            if (response.isSuccessful) {
+                DeleteAccountResult.Success
+            } else {
+                response.toAppError().toDeleteAccountResult()
+            }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            e.toAppError().toDeleteAccountResult()
+        }
+    }
+
+    private fun AppError.toDeleteAccountResult(): DeleteAccountResult = when (this) {
+        AppError.Network -> DeleteAccountResult.NetworkError
+        AppError.Unauthorized -> DeleteAccountResult.SessionExpired
+        is AppError.Client ->
+            if (code == 404) DeleteAccountResult.AccountNotFound else DeleteAccountResult.UnknownError
+        is AppError.Server -> DeleteAccountResult.ServerError
+        is AppError.Unknown -> DeleteAccountResult.UnknownError
     }
 }

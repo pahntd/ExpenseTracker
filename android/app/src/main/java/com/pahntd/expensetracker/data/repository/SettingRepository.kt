@@ -1,9 +1,12 @@
 package com.pahntd.expensetracker.data.repository
 
 import com.pahntd.expensetracker.data.auth.AuthRepository
+import com.pahntd.expensetracker.data.auth.DeleteAccountResult
 import com.pahntd.expensetracker.data.auth.session.SessionManager
 import com.pahntd.expensetracker.data.local.database.ExpenseDatabase
 import com.pahntd.expensetracker.utils.AccountPreferencesCleaner
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 class SettingRepository @Inject constructor(
@@ -56,6 +59,35 @@ class SettingRepository @Inject constructor(
             authRepository.logout(refreshToken)
         }
 
+        clearAccountPreferencesAndForgetUser()
+    }
+
+    /**
+     * Permanently deletes the signed-in account server-side (DELETE /account), then - only once
+     * the server has confirmed it - leaves the device in the same clean state as [logout]: Room
+     * wiped and sync cancelled ([LocalAccountDataCleaner.wipe]), account-scoped preferences
+     * cleared, and the session cleared with the last user id forgotten, so login's same-user
+     * shortcut can never hand the deleted account's rows to anyone.
+     *
+     * Any non-success result returns without touching local state. Unlike [logout] there is no
+     * refresh-token revocation: the backend already deleted every refresh token of the account.
+     *
+     * Cleanup runs [NonCancellable]: once the server has deleted the account, leaving the screen
+     * (and cancelling the caller's scope) must not strand a half-cleared local session.
+     */
+    suspend fun deleteAccount(): DeleteAccountResult {
+        val result = authRepository.deleteAccount()
+        if (result == DeleteAccountResult.Success) {
+            withContext(NonCancellable) {
+                localAccountDataCleaner.wipe()
+                clearAccountPreferencesAndForgetUser()
+            }
+        }
+        return result
+    }
+
+    /** Shared tail of [logout] and [deleteAccount]; Room must already be wiped. */
+    private suspend fun clearAccountPreferencesAndForgetUser() {
         accountPreferencesCleaner.clear()
         sessionManager.clearSessionAndForgetUser()
     }

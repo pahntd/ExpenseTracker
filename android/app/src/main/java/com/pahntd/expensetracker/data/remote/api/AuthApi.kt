@@ -8,6 +8,7 @@ import com.pahntd.expensetracker.data.remote.dto.RefreshTokenRequest
 import com.pahntd.expensetracker.data.remote.dto.RefreshTokenResponse
 import retrofit2.Response
 import retrofit2.http.Body
+import retrofit2.http.DELETE
 import retrofit2.http.POST
 
 interface AuthApi {
@@ -32,4 +33,13 @@ interface AuthApi {
     suspend fun logout(
         @Body request: RefreshTokenRequest
     ): Response<Unit>
+
+    /**
+     * Permanently deletes the authenticated account and all of its server-side data. The account
+     * is identified by the bearer token attached by
+     * [com.pahntd.expensetracker.data.remote.interceptor.AuthInterceptor], so no body is sent.
+     * Answers 204 on success.
+     */
+    @DELETE("account")
+    suspend fun deleteAccount(): Response<Unit>
 }
