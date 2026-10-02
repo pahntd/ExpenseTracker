@@ -20,6 +20,15 @@ sealed interface AppError {
      */
     data object Unauthorized : AppError
 
+    /**
+     * 429: the backend is rate limiting this client - either the request itself, or the
+     * `/auth/refresh` call the authenticator needed to recover a 401 (see
+     * [RefreshRateLimitedException]). Temporary: it says nothing about whether the session is
+     * valid. [retryAfterSeconds] is the backend's `Retry-After`, or `null` when it sent none (or
+     * an unparseable one).
+     */
+    data class RateLimited(val retryAfterSeconds: Long?) : AppError
+
     /** Any other 4xx: bad request, validation failure, not found, conflict, etc. */
     data class Client(val code: Int) : AppError
 

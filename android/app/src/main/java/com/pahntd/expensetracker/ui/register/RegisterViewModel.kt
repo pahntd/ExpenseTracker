@@ -6,6 +6,8 @@ import com.pahntd.expensetracker.data.auth.RegisterResult
 import com.pahntd.expensetracker.data.auth.AuthRepository
 import com.pahntd.expensetracker.utils.AuthValidator
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
@@ -13,6 +15,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import kotlin.time.Duration.Companion.seconds
 
 @HiltViewModel
 class RegisterViewModel @Inject constructor(
@@ -24,6 +27,8 @@ class RegisterViewModel @Inject constructor(
 
     private val _eventState = MutableSharedFlow<RegisterEvent>()
     val eventState = _eventState.asSharedFlow()
+
+    private var rateLimitCooldownJob: Job? = null
 
     fun updateEmail(email: String) {
         _uiState.update { current ->
@@ -60,7 +65,7 @@ class RegisterViewModel @Inject constructor(
     }
 
     fun register() {
-        if (_uiState.value.isLoading) return
+        if (_uiState.value.isLoading || _uiState.value.isRateLimited) return
 
         val current = _uiState.value
         val emailError = AuthValidator.validateEmail(current.email)
@@ -96,6 +101,12 @@ class RegisterViewModel @Inject constructor(
                     RegisterResult.EmailAlreadyExists ->
                         _eventState.emit(RegisterEvent.Error("An account with this email already exists"))
 
+                    // Never retried automatically - the user decides when to try again.
+                    is RegisterResult.RateLimited -> {
+                        startRateLimitCooldown(result.retryAfterSeconds)
+                        _eventState.emit(RegisterEvent.RateLimited(result.retryAfterSeconds))
+                    }
+
                     RegisterResult.NetworkError ->
                         _eventState.emit(
                             RegisterEvent.Error("Unable to reach the server. Check your connection and try again.")
@@ -107,6 +118,20 @@ class RegisterViewModel @Inject constructor(
             } finally {
                 _uiState.update { it.copy(isLoading = false) }
             }
+        }
+    }
+
+    /**
+     * Keeps the Register action disabled for the backend's Retry-After. Without one, nothing is
+     * disabled - no wait time is invented. Independent of Login's cooldown.
+     */
+    private fun startRateLimitCooldown(retryAfterSeconds: Long?) {
+        if (retryAfterSeconds == null || retryAfterSeconds <= 0) return
+        rateLimitCooldownJob?.cancel()
+        rateLimitCooldownJob = viewModelScope.launch {
+            _uiState.update { it.copy(isRateLimited = true) }
+            delay(retryAfterSeconds.seconds)
+            _uiState.update { it.copy(isRateLimited = false) }
         }
     }
 }

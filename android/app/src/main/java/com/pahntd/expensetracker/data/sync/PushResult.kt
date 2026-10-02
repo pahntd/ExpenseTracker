@@ -34,6 +34,8 @@ fun AppError.toPushResult(): PushResult = when (this) {
     is AppError.Network -> PushResult.RetryableFailure
     is AppError.Server -> PushResult.RetryableFailure
     is AppError.Unauthorized -> PushResult.NonRetryableFailure
+    // Not retried automatically (429 was a Client failure before); see toPullResult.
+    is AppError.RateLimited -> PushResult.NonRetryableFailure
     is AppError.Client -> PushResult.NonRetryableFailure
     is AppError.Unknown -> PushResult.NonRetryableFailure
 }

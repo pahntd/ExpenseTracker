@@ -11,6 +11,8 @@ import com.pahntd.expensetracker.data.sync.SyncTrigger
 import com.pahntd.expensetracker.utils.AccountPreferencesCleaner
 import com.pahntd.expensetracker.utils.AuthValidator
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
@@ -19,6 +21,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.util.concurrent.CancellationException
 import javax.inject.Inject
+import kotlin.time.Duration.Companion.seconds
 
 @HiltViewModel
 class LoginViewModel @Inject constructor(
@@ -34,6 +37,8 @@ class LoginViewModel @Inject constructor(
 
     private val _eventState = MutableSharedFlow<LoginEvent>()
     val eventState = _eventState.asSharedFlow()
+
+    private var rateLimitCooldownJob: Job? = null
 
     fun updateEmail(email: String) {
         _uiState.update { current ->
@@ -55,7 +60,7 @@ class LoginViewModel @Inject constructor(
     }
 
     fun login() {
-        if (_uiState.value.isLoading) return
+        if (_uiState.value.isLoading || _uiState.value.isRateLimited) return
 
         val current = _uiState.value
         val emailError = AuthValidator.validateEmail(current.email)
@@ -108,6 +113,12 @@ class LoginViewModel @Inject constructor(
                     LoginResult.InvalidCredentials ->
                         _eventState.emit(LoginEvent.Error("Invalid email or password"))
 
+                    // Never retried automatically - the user decides when to try again.
+                    is LoginResult.RateLimited -> {
+                        startRateLimitCooldown(result.retryAfterSeconds)
+                        _eventState.emit(LoginEvent.RateLimited(result.retryAfterSeconds))
+                    }
+
                     LoginResult.NetworkError ->
                         _eventState.emit(
                             LoginEvent.Error("Unable to reach the server. Check your connection and try again.")
@@ -119,6 +130,21 @@ class LoginViewModel @Inject constructor(
             } finally {
                 _uiState.update { it.copy(isLoading = false) }
             }
+        }
+    }
+
+    /**
+     * Keeps the Login action disabled for the backend's Retry-After. Without one, nothing is
+     * disabled - no wait time is invented. The job lives in [viewModelScope], so it survives
+     * rotation and is cancelled with the ViewModel.
+     */
+    private fun startRateLimitCooldown(retryAfterSeconds: Long?) {
+        if (retryAfterSeconds == null || retryAfterSeconds <= 0) return
+        rateLimitCooldownJob?.cancel()
+        rateLimitCooldownJob = viewModelScope.launch {
+            _uiState.update { it.copy(isRateLimited = true) }
+            delay(retryAfterSeconds.seconds)
+            _uiState.update { it.copy(isRateLimited = false) }
         }
     }
 

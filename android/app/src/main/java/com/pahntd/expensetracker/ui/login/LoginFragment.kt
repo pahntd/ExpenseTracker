@@ -62,6 +62,14 @@ class LoginFragment : Fragment() {
                                 ).show()
                             }
 
+                            is LoginEvent.RateLimited -> {
+                                Toast.makeText(
+                                    requireContext(),
+                                    rateLimitedMessage(event.retryAfterSeconds),
+                                    Toast.LENGTH_LONG
+                                ).show()
+                            }
+
                             is LoginEvent.Success -> {
                                 saveUsername(event.response.email)
                                 navigateToHome()
@@ -97,8 +105,19 @@ class LoginFragment : Fragment() {
     private fun renderState(state: LoginUiState) {
         binding.tilEmail.error = state.emailError
         binding.tilPassword.error = state.passwordError
-        binding.btnLogin.isEnabled = !state.isLoading
+        binding.btnLogin.isEnabled = !state.isLoading && !state.isRateLimited
     }
+
+    private fun rateLimitedMessage(retryAfterSeconds: Long?): String =
+        if (retryAfterSeconds == null) {
+            getString(R.string.login_rate_limited)
+        } else {
+            resources.getQuantityString(
+                R.plurals.login_rate_limited_retry_after,
+                retryAfterSeconds.coerceAtMost(Int.MAX_VALUE.toLong()).toInt(),
+                retryAfterSeconds
+            )
+        }
 
     private fun setupInputListeners() {
         binding.etEmail.doAfterTextChanged {

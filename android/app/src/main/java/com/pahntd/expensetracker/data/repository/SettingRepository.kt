@@ -135,6 +135,8 @@ class SettingRepository @Inject constructor(
                 when (authRepository.refresh(refreshToken)) {
                     RefreshResult.InvalidRefreshToken -> DeleteAccountResult.Success
                     RefreshResult.NetworkError -> DeleteAccountResult.NetworkError
+                    // Rate limited: the 404 can't be confirmed yet - keep local data.
+                    is RefreshResult.RateLimited,
                     is RefreshResult.Success,
                     RefreshResult.UnknownError -> DeleteAccountResult.UnknownError
                 }

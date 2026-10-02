@@ -8,6 +8,12 @@ sealed interface LoginResult {
     /** Server rejected the credentials (see note in [AuthRepository.login] about the status code). */
     data object InvalidCredentials : LoginResult
 
+    /**
+     * 429: too many attempts. [retryAfterSeconds] is the backend's Retry-After (`null` if absent).
+     * Never retried automatically.
+     */
+    data class RateLimited(val retryAfterSeconds: Long?) : LoginResult
+
     /** Could not reach the server (offline, DNS, timeout, connection refused). */
     data object NetworkError : LoginResult
 

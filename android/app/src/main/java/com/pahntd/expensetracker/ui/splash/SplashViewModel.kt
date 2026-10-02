@@ -26,7 +26,7 @@ import javax.inject.Inject
  *  session exists, offline                   -> trust local session -> [SplashDestination.Home]
  *  session exists, online, refresh succeeds  -> update access token -> [SplashDestination.Home]
  *  session exists, online, refresh token invalid/expired (definitive) -> clearSession() + account prefs -> [SplashDestination.Login]
- *  session exists, online, refresh fails due to network/timeout/unknown error -> keep session -> [SplashDestination.Home]
+ *  session exists, online, refresh fails due to network/timeout/rate limit/unknown error -> keep session -> [SplashDestination.Home]
  *
  * Session persistence goes through [SessionManager]; this class never touches DataStore directly.
  * Account-scoped preferences are cleared through [AccountPreferencesCleaner].
@@ -89,6 +89,9 @@ class SplashViewModel @Inject constructor(
                     // Couldn't reach the server, or got back something unexpected — this says
                     // nothing about whether the session is actually valid, so keep it and let
                     // the user in with what's cached locally.
+                    // Rate limited (429) is temporary too - never a reason to log out. The cooldown
+                    // is already recorded, so nothing refreshes again before Retry-After.
+                    is RefreshResult.RateLimited,
                     RefreshResult.NetworkError,
                     RefreshResult.UnknownError -> {
                         navigateHome()

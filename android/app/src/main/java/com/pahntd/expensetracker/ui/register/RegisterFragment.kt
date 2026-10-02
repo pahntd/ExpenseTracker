@@ -12,6 +12,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
+import com.pahntd.expensetracker.R
 import com.pahntd.expensetracker.databinding.FragmentRegisterBinding
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
@@ -59,6 +60,14 @@ class RegisterFragment : Fragment() {
                                 ).show()
                             }
 
+                            is RegisterEvent.RateLimited -> {
+                                Toast.makeText(
+                                    requireContext(),
+                                    rateLimitedMessage(event.retryAfterSeconds),
+                                    Toast.LENGTH_LONG
+                                ).show()
+                            }
+
                             is RegisterEvent.Success -> {
                                 // No auto-login: confirm and send the user back to Login.
                                 Toast.makeText(
@@ -81,8 +90,19 @@ class RegisterFragment : Fragment() {
         binding.tilEmail.error = state.emailError
         binding.tilPassword.error = state.passwordError
         binding.tilConfirmPassword.error = state.confirmPasswordError
-        binding.btnRegister.isEnabled = !state.isLoading
+        binding.btnRegister.isEnabled = !state.isLoading && !state.isRateLimited
     }
+
+    private fun rateLimitedMessage(retryAfterSeconds: Long?): String =
+        if (retryAfterSeconds == null) {
+            getString(R.string.register_rate_limited)
+        } else {
+            resources.getQuantityString(
+                R.plurals.register_rate_limited_retry_after,
+                retryAfterSeconds.coerceAtMost(Int.MAX_VALUE.toLong()).toInt(),
+                retryAfterSeconds
+            )
+        }
 
     private fun setupInputListeners() {
         binding.etEmail.doAfterTextChanged {

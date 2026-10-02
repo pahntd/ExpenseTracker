@@ -1,8 +1,12 @@
 package com.pahntd.expensetracker.data.remote.authenticator
 
+import com.pahntd.expensetracker.data.auth.RefreshCooldown
 import com.pahntd.expensetracker.data.auth.session.SessionManager
 import com.pahntd.expensetracker.data.remote.api.TokenRefreshApi
 import com.pahntd.expensetracker.data.remote.dto.RefreshTokenRequest
+import com.pahntd.expensetracker.data.remote.error.HTTP_TOO_MANY_REQUESTS
+import com.pahntd.expensetracker.data.remote.error.RefreshRateLimitedException
+import com.pahntd.expensetracker.data.remote.error.retryAfterSeconds
 import com.pahntd.expensetracker.di.BareClient
 import com.pahntd.expensetracker.utils.AccountPreferencesCleaner
 import okhttp3.Authenticator
@@ -36,17 +40,34 @@ import javax.inject.Inject
  * own failed request used: if another thread already refreshed while this one was waiting on the
  * lock, the token will have moved on, and this thread just retries with it instead of calling
  * `/auth/refresh` again.
+ *
+ * Rate limiting: a 429 from `/auth/refresh` is temporary and says nothing about the refresh
+ * token, so the session is kept. The original request is not replayed with its stale token;
+ * instead [RefreshRateLimitedException] is thrown, failing that call with a typed rate-limit
+ * error. The `Retry-After` is recorded in [refreshCooldown], and until it elapses every further
+ * 401 fails the same way without calling `/auth/refresh` at all. Requests that were already
+ * waiting on the lock when the 429 arrived also fail without a second refresh, even if the
+ * backend sent no `Retry-After`. Nothing here retries, and nothing here shows UI.
  */
 class AuthAuthenticator @Inject constructor(
     private val sessionManager: SessionManager,
     @BareClient private val tokenRefreshApi: TokenRefreshApi,
     private val accountPreferencesCleaner: AccountPreferencesCleaner,
+    private val refreshCooldown: RefreshCooldown,
 ) : Authenticator {
+
+    /** Number of `/auth/refresh` responses received so far. Written under the lock. */
+    @Volatile
+    private var refreshResponseCount = 0L
+
+    /** Whether the most recent `/auth/refresh` response was a 429. Guarded by the lock. */
+    private var lastRefreshRateLimited = false
 
     override fun authenticate(route: Route?, response: Response): Request? {
         if (response.priorResponse != null) return null
 
         val failedAuthHeader = response.request.header("Authorization")
+        val refreshResponsesSeen = refreshResponseCount
 
         synchronized(this) {
             val cachedAuthHeader = sessionManager.getCurrentAccessToken()?.let { "Bearer $it" }
@@ -65,20 +86,41 @@ class AuthAuthenticator @Inject constructor(
                 return null
             }
 
-            val newAccessToken = try {
-                val refreshResponse = tokenRefreshApi.refresh(
+            // Still inside a Retry-After window from an earlier 429: don't call /auth/refresh.
+            refreshCooldown.remainingSeconds()?.let { throw RefreshRateLimitedException(it) }
+
+            // Another thread's refresh came back 429 while we were waiting for the lock (with no
+            // usable Retry-After, so no cooldown): share its outcome instead of refreshing again.
+            if (refreshResponseCount != refreshResponsesSeen && lastRefreshRateLimited) {
+                throw RefreshRateLimitedException(retryAfterSeconds = null)
+            }
+
+            val refreshResponse = try {
+                tokenRefreshApi.refresh(
                     RefreshTokenRequest(refreshToken = refreshToken)
                 ).execute()
-                if (refreshResponse.isSuccessful) {
-                    refreshResponse.body()?.accessToken
-                } else {
-                    null
-                }
             } catch (e: IOException) {
                 // Network failure/timeout while refreshing is not a definitive auth failure -
                 // leave the session intact so a later attempt (once connectivity returns) can
                 // still succeed, instead of clearing it like an actually-rejected refresh token.
                 return null
+            }
+
+            refreshResponseCount++
+            lastRefreshRateLimited = refreshResponse.code() == HTTP_TOO_MANY_REQUESTS
+
+            if (lastRefreshRateLimited) {
+                // Rate limited, not rejected: keep the session, start the cooldown, and fail the
+                // original call with a typed error rather than replaying it with the old token.
+                val retryAfterSeconds = refreshResponse.retryAfterSeconds()
+                refreshCooldown.start(retryAfterSeconds)
+                throw RefreshRateLimitedException(retryAfterSeconds)
+            }
+
+            val newAccessToken = if (refreshResponse.isSuccessful) {
+                refreshResponse.body()?.accessToken
+            } else {
+                null
             }
 
             if (newAccessToken.isNullOrBlank()) {

@@ -5,5 +5,7 @@ data class LoginUiState(
     val password: String = "",
     val emailError: String? = null,
     val passwordError: String? = null,
-    val isLoading: Boolean = false
+    val isLoading: Boolean = false,
+    /** A 429's Retry-After window is running: the Login action stays disabled until it ends. */
+    val isRateLimited: Boolean = false
 )

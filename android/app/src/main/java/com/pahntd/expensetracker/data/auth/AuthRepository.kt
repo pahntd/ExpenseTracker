@@ -5,6 +5,9 @@ import com.pahntd.expensetracker.data.remote.api.AuthApi
 import com.pahntd.expensetracker.data.remote.dto.LoginRequest
 import com.pahntd.expensetracker.data.remote.dto.RefreshTokenRequest
 import com.pahntd.expensetracker.data.remote.error.AppError
+import com.pahntd.expensetracker.data.remote.error.HTTP_TOO_MANY_REQUESTS
+import com.pahntd.expensetracker.data.remote.error.RefreshRateLimitedException
+import com.pahntd.expensetracker.data.remote.error.retryAfterSeconds
 import com.pahntd.expensetracker.data.remote.error.toAppError
 import retrofit2.HttpException
 import java.io.IOException
@@ -12,7 +15,8 @@ import java.util.concurrent.CancellationException
 import javax.inject.Inject
 
 class AuthRepository @Inject constructor(
-    private val authApi: AuthApi
+    private val authApi: AuthApi,
+    private val refreshCooldown: RefreshCooldown,
 ) {
 
     suspend fun login(email: String, password: String): LoginResult {
@@ -26,6 +30,8 @@ class AuthRepository @Inject constructor(
             // -> StatusPages). 401 is also accepted here in case the contract tightens later.
             if (e.code() == 400 || e.code() == 401) {
                 LoginResult.InvalidCredentials
+            } else if (e.code() == HTTP_TOO_MANY_REQUESTS) {
+                LoginResult.RateLimited(e.retryAfterSeconds())
             } else {
                 LoginResult.UnknownError
             }
@@ -49,6 +55,8 @@ class AuthRepository @Inject constructor(
             // -> StatusPages). 409 is also accepted here in case the contract tightens later.
             if (e.code() == 400 || e.code() == 409) {
                 RegisterResult.EmailAlreadyExists
+            } else if (e.code() == HTTP_TOO_MANY_REQUESTS) {
+                RegisterResult.RateLimited(e.retryAfterSeconds())
             } else {
                 RegisterResult.UnknownError
             }
@@ -61,7 +69,12 @@ class AuthRepository @Inject constructor(
         }
     }
 
+    /**
+     * POST /auth/refresh. While [refreshCooldown] is running (an earlier 429's Retry-After, from
+     * here or from the authenticator) the endpoint is not called at all.
+     */
     suspend fun refresh(refreshToken: String): RefreshResult {
+        refreshCooldown.remainingSeconds()?.let { return RefreshResult.RateLimited(it) }
         return try {
             val response = authApi.refresh(
                 RefreshTokenRequest(refreshToken = refreshToken)
@@ -72,9 +85,18 @@ class AuthRepository @Inject constructor(
             // A 400 (malformed body) means the token is unusable too.
             if (e.code() == 401 || e.code() == 400) {
                 RefreshResult.InvalidRefreshToken
+            } else if (e.code() == HTTP_TOO_MANY_REQUESTS) {
+                // Temporary, not a verdict on the token: record the cooldown, never retry here.
+                val retryAfterSeconds = e.retryAfterSeconds()
+                refreshCooldown.start(retryAfterSeconds)
+                RefreshResult.RateLimited(retryAfterSeconds)
             } else {
                 RefreshResult.UnknownError
             }
+        } catch (e: RefreshRateLimitedException) {
+            // Thrown by AuthAuthenticator (it already recorded any cooldown) - must be caught
+            // before IOException, which it extends.
+            RefreshResult.RateLimited(e.retryAfterSeconds)
         } catch (e: IOException) {
             RefreshResult.NetworkError
         } catch (e: CancellationException) {
@@ -129,6 +151,9 @@ class AuthRepository @Inject constructor(
         is AppError.Client ->
             if (code == 404) DeleteAccountResult.AccountNotFound else DeleteAccountResult.UnknownError
         is AppError.Server -> DeleteAccountResult.ServerError
+        // Rate limited (the DELETE itself, or the refresh it needed): nothing was deleted and the
+        // session is intact; the generic "try again" outcome keeps local data, like any failure.
+        is AppError.RateLimited -> DeleteAccountResult.UnknownError
         is AppError.Unknown -> DeleteAccountResult.UnknownError
     }
 }

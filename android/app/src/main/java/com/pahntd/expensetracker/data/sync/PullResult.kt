@@ -38,6 +38,9 @@ fun AppError.toPullResult(): PullResult = when (this) {
     is AppError.Network -> PullResult.RetryableFailure
     is AppError.Server -> PullResult.RetryableFailure
     is AppError.Unauthorized -> PullResult.NonRetryableFailure
+    // Not retried automatically (429 was a Client failure before). A refresh that was rate
+    // limited keeps the session, so the next sync trigger picks up where this one stopped.
+    is AppError.RateLimited -> PullResult.NonRetryableFailure
     is AppError.Client -> PullResult.NonRetryableFailure
     is AppError.Unknown -> PullResult.NonRetryableFailure
 }

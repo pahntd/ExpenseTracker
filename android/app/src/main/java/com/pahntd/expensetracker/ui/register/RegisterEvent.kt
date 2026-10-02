@@ -12,4 +12,9 @@ sealed interface RegisterEvent {
     data class Error(
         val message: String
     ) : RegisterEvent
+
+    /** 429 on register. The Fragment turns it into a localized message (with the wait, if known). */
+    data class RateLimited(
+        val retryAfterSeconds: Long?
+    ) : RegisterEvent
 }

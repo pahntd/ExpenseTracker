@@ -13,6 +13,12 @@ sealed interface RegisterResult {
     /** Server rejected the email as already registered (see note in AuthRepository.register). */
     data object EmailAlreadyExists : RegisterResult
 
+    /**
+     * 429: too many attempts. [retryAfterSeconds] is the backend's Retry-After (`null` if absent).
+     * Never retried automatically.
+     */
+    data class RateLimited(val retryAfterSeconds: Long?) : RegisterResult
+
     /** Could not reach the server (offline, DNS, timeout, connection refused). */
     data object NetworkError : RegisterResult
 

@@ -9,6 +9,16 @@
     <string name="settings_delete_account_cancel">Cancel</string>
     <string name="settings_delete_account_confirm">Delete Account</string>
     <string name="settings_account_deleted">Your account has been deleted</string>
+    <string name="login_rate_limited">Too many login attempts. Please try again later.</string>
+    <plurals name="login_rate_limited_retry_after">
+        <item quantity="one">Too many login attempts. Please try again in %d second.</item>
+        <item quantity="other">Too many login attempts. Please try again in %d seconds.</item>
+    </plurals>
+    <string name="register_rate_limited">Too many registration attempts. Please try again later.</string>
+    <plurals name="register_rate_limited_retry_after">
+        <item quantity="one">Too many registration attempts. Please try again in %d second.</item>
+        <item quantity="other">Too many registration attempts. Please try again in %d seconds.</item>
+    </plurals>
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
 </resources>
