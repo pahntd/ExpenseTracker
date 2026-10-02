@@ -44,6 +44,9 @@ dependencies {
 
     implementation(libs.jbcrypt)
 
+    // Redis/Valkey client for the shared rate-limit counters (Render Key Value in production)
+    implementation(libs.lettuce.core)
+
     implementation("org.jetbrains.exposed:exposed-java-time:1.5.0")
 
     testImplementation(kotlin("test"))

@@ -14,6 +14,8 @@ import com.pahntd.expensetracker.auth.JwtConfig
 import com.pahntd.expensetracker.auth.RefreshTokenGenerator
 import com.pahntd.expensetracker.auth.TokenService
 import com.pahntd.expensetracker.model.RefreshToken
+import com.pahntd.expensetracker.plugins.rateLimitByIp
+import com.pahntd.expensetracker.ratelimit.RateLimitPolicy
 import com.pahntd.expensetracker.repository.ExposedCategoryRepository
 import com.pahntd.expensetracker.repository.ExposedRefreshTokenRepository
 import com.pahntd.expensetracker.repository.ExposedUserRepository
@@ -41,130 +43,136 @@ fun Application.configureRouting() {
             )
         }
 
-        post("/register") {
-            val request = call.receive<RegisterRequest>()
+        rateLimitByIp(RateLimitPolicy.REGISTER) {
+            post("/register") {
+                val request = call.receive<RegisterRequest>()
 
-            val passwordHasher = BCryptPasswordHasher()
+                val passwordHasher = BCryptPasswordHasher()
 
-            val userRepository = ExposedUserRepository()
-            val categoryRepository = ExposedCategoryRepository()
+                val userRepository = ExposedUserRepository()
+                val categoryRepository = ExposedCategoryRepository()
 
-            val authService = AuthService(
-                userRepository = userRepository,
-                categoryRepository = categoryRepository,
-                passwordHasher = passwordHasher
-            )
-
-            val user = authService.register(
-                email = request.email,
-                password = request.password
-            )
-
-            call.respond(
-                HttpStatusCode.Created,
-                RegisterResponse(
-                    id = user.id.toString(),
-                    email = user.email
+                val authService = AuthService(
+                    userRepository = userRepository,
+                    categoryRepository = categoryRepository,
+                    passwordHasher = passwordHasher
                 )
-            )
 
+                val user = authService.register(
+                    email = request.email,
+                    password = request.password
+                )
+
+                call.respond(
+                    HttpStatusCode.Created,
+                    RegisterResponse(
+                        id = user.id.toString(),
+                        email = user.email
+                    )
+                )
+
+            }
         }
 
-        post("/login") {
-            val request = call.receive<LoginRequest>()
-            val passwordHasher = BCryptPasswordHasher()
-            val userRepository = ExposedUserRepository()
-            val categoryRepository = ExposedCategoryRepository()
-            val authService = AuthService(
-                userRepository = userRepository,
-                categoryRepository = categoryRepository,
-                passwordHasher = passwordHasher
-            )
-            val user = authService.login(
-                email = request.email,
-                password = request.password
-            )
-
-            val tokenService = TokenService()
-
-
-            val refreshTokenRepository =
-                ExposedRefreshTokenRepository()
-
-            val refreshTokenGenerator =
-                RefreshTokenGenerator()
-
-            val accessToken = tokenService.generateAccessToken(
-                user.id
-            )
-
-            val refreshToken =
-                refreshTokenGenerator.generate()
-
-
-            val refreshTokenEntity = RefreshToken(
-                id = Uuid.random(),
-                userId = user.id,
-                token = refreshToken,
-                expiresAt = now().plusDays(
-                    JwtConfig.refreshTokenExpirationDays
-                ),
-                createdAt = now(),
-                revokedAt = null
-            )
-
-            refreshTokenRepository.create(
-                refreshTokenEntity
-            )
-
-            call.respond(
-                LoginResponse(
-                    userId = user.id.toString(),
-                    email = user.email,
-                    accessToken = accessToken,
-                    refreshToken = refreshToken
+        rateLimitByIp(RateLimitPolicy.LOGIN) {
+            post("/login") {
+                val request = call.receive<LoginRequest>()
+                val passwordHasher = BCryptPasswordHasher()
+                val userRepository = ExposedUserRepository()
+                val categoryRepository = ExposedCategoryRepository()
+                val authService = AuthService(
+                    userRepository = userRepository,
+                    categoryRepository = categoryRepository,
+                    passwordHasher = passwordHasher
                 )
-            )
+                val user = authService.login(
+                    email = request.email,
+                    password = request.password
+                )
+
+                val tokenService = TokenService()
+
+
+                val refreshTokenRepository =
+                    ExposedRefreshTokenRepository()
+
+                val refreshTokenGenerator =
+                    RefreshTokenGenerator()
+
+                val accessToken = tokenService.generateAccessToken(
+                    user.id
+                )
+
+                val refreshToken =
+                    refreshTokenGenerator.generate()
+
+
+                val refreshTokenEntity = RefreshToken(
+                    id = Uuid.random(),
+                    userId = user.id,
+                    token = refreshToken,
+                    expiresAt = now().plusDays(
+                        JwtConfig.refreshTokenExpirationDays
+                    ),
+                    createdAt = now(),
+                    revokedAt = null
+                )
+
+                refreshTokenRepository.create(
+                    refreshTokenEntity
+                )
+
+                call.respond(
+                    LoginResponse(
+                        userId = user.id.toString(),
+                        email = user.email,
+                        accessToken = accessToken,
+                        refreshToken = refreshToken
+                    )
+                )
+            }
         }
 
-        post("/auth/refresh"){
-            val request = call.receive<RefreshTokenRequest>()
-            val refreshTokenRepository = ExposedRefreshTokenRepository()
-            val refreshToken = refreshTokenRepository.findByToken(
-                request.refreshToken
-            )
-            if (refreshToken == null) {
+        rateLimitByIp(RateLimitPolicy.REFRESH) {
+            post("/auth/refresh"){
+                val request = call.receive<RefreshTokenRequest>()
+                val refreshTokenRepository = ExposedRefreshTokenRepository()
+                val refreshToken = refreshTokenRepository.findByToken(
+                    request.refreshToken
+                )
+                if (refreshToken == null) {
+                    call.respond(
+                        HttpStatusCode.Unauthorized,
+                        "Invalid refresh token"
+                    )
+                    return@post
+                }
+                if (refreshToken.revokedAt != null) {
+                    call.respond(
+                        HttpStatusCode.Unauthorized,
+                        "Refresh token has been revoked"
+                    )
+                    return@post
+                }
+                if (refreshToken.expiresAt.isBefore(now(ZoneOffset.UTC)
+                    )
+                ) {
+                    call.respond(
+                        HttpStatusCode.Unauthorized,
+                        "Refresh token has expired"
+                    )
+                    return@post
+                }
+                val tokenService = TokenService()
+                val accessToken = tokenService.generateAccessToken(
+                    refreshToken.userId
+                )
                 call.respond(
-                    HttpStatusCode.Unauthorized,
-                    "Invalid refresh token"
+                    RefreshTokenResponse(
+                        accessToken = accessToken
+                    )
                 )
-                return@post
             }
-            if (refreshToken.revokedAt != null) {
-                call.respond(
-                    HttpStatusCode.Unauthorized,
-                    "Refresh token has been revoked"
-                )
-                return@post
-            }
-            if (refreshToken.expiresAt.isBefore(now(ZoneOffset.UTC)
-                )
-            ) {
-                call.respond(
-                    HttpStatusCode.Unauthorized,
-                    "Refresh token has expired"
-                )
-                return@post
-            }
-            val tokenService = TokenService()
-            val accessToken = tokenService.generateAccessToken(
-                refreshToken.userId
-            )
-            call.respond(
-                RefreshTokenResponse(
-                    accessToken = accessToken
-                )
-            )
         }
 
         post("/auth/logout"){

@@ -22,6 +22,24 @@ services:
       retries: 10
       start_period: 10s
 
+  # Shared rate-limit counters. Valkey 8 = what Render Key Value runs in production.
+  # Counters are short-lived, so persistence is off and no volume is needed. No password: dev only,
+  # and the port is bound to localhost so the instance is not reachable from the network.
+  redis:
+    image: valkey/valkey:8-alpine
+    container_name: expense-tracker-redis
+    restart: unless-stopped
+    command: ["valkey-server", "--save", "", "--appendonly", "no"]
+
+    ports:
+      - "127.0.0.1:6379:6379"
+
+    healthcheck:
+      test: ["CMD", "valkey-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
   # LOCAL DEVELOPMENT ONLY. Every value below is a dev placeholder, never a production secret.
   backend:
     build: ./backend
@@ -31,6 +49,8 @@ services:
 
     depends_on:
       postgres:
+        condition: service_healthy
+      redis:
         condition: service_healthy
 
     environment:
@@ -42,6 +62,8 @@ services:
       DATABASE_USER: expense_tracker
       DATABASE_PASSWORD: expense_tracker_dev_password
       JWT_SECRET: local-dev-only-jwt-secret-do-not-use-in-production
+      REDIS_URL: redis://redis:6379
+      # No CLIENT_IP_HEADER: there is no proxy locally, so no header may be trusted.
 
     ports:
       - "8080:8080"

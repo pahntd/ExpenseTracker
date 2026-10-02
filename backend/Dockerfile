@@ -27,8 +27,8 @@ ENV TZ=UTC
 # falling back to the localhost development database. Override with APP_ENV=development if needed.
 ENV APP_ENV=production
 
-# The server binds 0.0.0.0:${PORT:-8080}. DATABASE_URL, DATABASE_USER, DATABASE_PASSWORD and
-# JWT_SECRET must be supplied at runtime.
+# The server binds 0.0.0.0:${PORT:-8080}. DATABASE_URL, DATABASE_USER, DATABASE_PASSWORD,
+# JWT_SECRET and REDIS_URL must be supplied at runtime (CLIENT_IP_HEADER behind a proxy).
 EXPOSE 8080
 
 ENTRYPOINT ["java", "-Duser.timezone=UTC", "-jar", "/app/backend.jar"]

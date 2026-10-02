@@ -143,6 +143,8 @@ Template: [`backend/.env.example`](.env.example). Real values live **only** in t
 | `DATABASE_PASSWORD` | `<PRODUCTION_DB_PASSWORD>` (Render-generated) | **yes** |
 | `JWT_SECRET` | `<PRODUCTION_JWT_SECRET>` (generated locally, see §6) | **yes** |
 | `PORT` | `8080` | no |
+| `REDIS_URL` | Render Key Value **internal** URL, `redis://<RENDER_KV_INTERNAL_HOST>:6379` (see §5a) | low (internal-only host) |
+| `CLIENT_IP_HEADER` | `CF-Connecting-IP` (see §5a) | no |
 | `JAVA_TOOL_OPTIONS` (optional) | `-XX:MaxRAMPercentage=75` | no |
 
 Rules:
@@ -152,6 +154,16 @@ Rules:
 - `JWT_SECRET` is production-only; never reuse the local compose value (`local-dev-only-…`).
 - `APP_ENV=production` is correct for the verification environment too: it enables the fail-fast configuration checks.
 - Render passes service env vars to Docker builds as build args. Our Dockerfile declares **no `ARG`s**, so no secret can be baked into the image. Keep it that way.
+
+### 5a. Redis / IP rate limiting (added 2026-10-02)
+
+`POST /login` and `POST /register` allow 5 requests/60 s per client IP, `POST /auth/refresh` 10/60 s, each in its own bucket (`rl:<login|register|refresh>:ip:<ip>`, fixed window, atomic Lua `INCR` + `PEXPIRE`). Over the limit: `429` + `Retry-After: <s>` + `{"error": "...", "code": "RATE_LIMITED", "retryAfterSeconds": <s>}`.
+
+- Counters live only in Redis, so every backend instance shares them. There is no in-memory fallback.
+- `REDIS_URL` is mandatory with `APP_ENV=production`; startup also fails if Redis does not answer PING (same policy as the database).
+- If Redis fails at runtime, the three endpoints answer `503` (fail closed) and the error is logged; other endpoints are unaffected. Lettuce reconnects automatically.
+- Render Key Value: create it in the **same region** as the web service (Singapore) and use the **internal** URL. Keep external access disabled — the backend does not need it.
+- Client IP: requests reach the container from a Render-internal 10.x proxy, so the socket address is the same for everyone. `CLIENT_IP_HEADER=CF-Connecting-IP` names the header Render's Cloudflare edge overwrites with the real client IP. `X-Forwarded-For` is deliberately not used: Render appends to it, so its first entry is client-controlled. Without `CLIENT_IP_HEADER` (or if the header is missing on a request) the limiter falls back to the socket address — stricter, never looser. *Verify after deploy* (§8): the startup log line `client IP from header CF-Connecting-IP`, and no `Header CF-Connecting-IP is missing` warnings for normal traffic.
 
 ---
 
