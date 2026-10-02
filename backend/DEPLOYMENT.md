@@ -159,6 +159,7 @@ Rules:
 
 `POST /login` and `POST /register` allow 5 requests/60 s per client IP, `POST /auth/refresh` 10/60 s, each in its own bucket (`rl:<login|register|refresh>:ip:<ip>`, fixed window, atomic Lua `INCR` + `PEXPIRE`). Over the limit: `429` + `Retry-After: <s>` + `{"error": "...", "code": "RATE_LIMITED", "retryAfterSeconds": <s>}`.
 
+- `POST /login` additionally has a per-account limit (added 2026-10-02, Phase 2): 5 attempts/60 s per normalized email (`trim` + lowercase), key `rl:login:account:<email>`, checked after the IP limit and before the password check. Invalid credentials keep their existing `400` (identical for unknown email and wrong password, both counted); the attempt after 5 failures gets the same `429` contract with the account bucket's remaining TTL. A successful login deletes the counter. Uses the same Redis connection and `REDIS_URL` — no new service or variable.
 - Counters live only in Redis, so every backend instance shares them. There is no in-memory fallback.
 - `REDIS_URL` is mandatory with `APP_ENV=production`; startup also fails if Redis does not answer PING (same policy as the database).
 - If Redis fails at runtime, the three endpoints answer `503` (fail closed) and the error is logged; other endpoints are unaffected. Lettuce reconnects automatically.

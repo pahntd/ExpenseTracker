@@ -11,6 +11,13 @@ interface RateLimitStore {
      * @throws RateLimitStoreUnavailableException when the store cannot be reached.
      */
     suspend fun increment(key: String, window: Duration): WindowCount
+
+    /**
+     * Deletes the counter for [key]; the next increment starts a new window.
+     *
+     * @throws RateLimitStoreUnavailableException when the store cannot be reached.
+     */
+    suspend fun reset(key: String)
 }
 
 /** Counter value after an increment, and the time left until its window resets. */

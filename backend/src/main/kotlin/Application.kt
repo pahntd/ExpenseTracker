@@ -18,7 +18,11 @@ import io.ktor.server.application.Application
 import io.ktor.server.application.ApplicationStopped
 import io.ktor.server.application.log
 
-fun Application.rootModule() {
+/**
+ * [clientIpResolver] defaults to the CLIENT_IP_HEADER configuration; tests pass their own so they
+ * can simulate several clients without changing the environment.
+ */
+fun Application.rootModule(clientIpResolver: ClientIpResolver = ClientIpResolver.fromEnvironment()) {
     val environment = AppEnvironment.current()
     log.info("Starting in $environment mode")
 
@@ -37,7 +41,7 @@ fun Application.rootModule() {
     configureAuthentication()
     configureRateLimiting(
         service = RateLimitService(RedisRateLimitStore(redis)),
-        clientIpResolver = ClientIpResolver.fromEnvironment()
+        clientIpResolver = clientIpResolver
     )
     configureRouting()
     // $env:JWT_SECRET="your-super-secret-key-for-local-development-only"

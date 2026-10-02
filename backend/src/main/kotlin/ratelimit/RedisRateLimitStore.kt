@@ -27,6 +27,14 @@ class RedisRateLimitStore(
         return WindowCount(count = result[0], resetsIn = result[1].milliseconds)
     }
 
+    override suspend fun reset(key: String) {
+        try {
+            redis.delete(key)
+        } catch (e: RedisException) {
+            throw RateLimitStoreUnavailableException(e)
+        }
+    }
+
     private companion object {
         // KEYS[1] = counter key, ARGV[1] = window in milliseconds. Returns {count, ttlMillis}.
         // The TTL check also repairs a counter that somehow lost its expiry, which would

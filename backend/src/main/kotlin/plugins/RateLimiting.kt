@@ -2,6 +2,7 @@ package com.pahntd.expensetracker.plugins
 
 import com.pahntd.expensetracker.api.ErrorResponse
 import com.pahntd.expensetracker.api.RateLimitErrorResponse
+import com.pahntd.expensetracker.ratelimit.AccountLoginLimiter
 import com.pahntd.expensetracker.ratelimit.ClientIpResolver
 import com.pahntd.expensetracker.ratelimit.RateLimitDecision
 import com.pahntd.expensetracker.ratelimit.RateLimitPolicy
@@ -36,7 +37,10 @@ import io.ktor.util.AttributeKey
 class RateLimiting(
     val service: RateLimitService,
     val clientIpResolver: ClientIpResolver
-)
+) {
+    /** Per-account login protection; shares [service] and therefore the one Redis connection. */
+    val accountLoginLimiter = AccountLoginLimiter(service)
+}
 
 private val RateLimitingKey = AttributeKey<RateLimiting>("RateLimiting")
 
@@ -48,13 +52,19 @@ fun Application.configureRateLimiting(service: RateLimitService, clientIpResolve
     )
 }
 
+val Application.accountLoginLimiter: AccountLoginLimiter
+    get() = rateLimiting().accountLoginLimiter
+
+private fun Application.rateLimiting(): RateLimiting =
+    attributes.getOrNull(RateLimitingKey)
+        ?: throw IllegalStateException("configureRateLimiting() must run before routing is configured")
+
 /**
  * Applies [policy] to the routes built in [build]. The check runs before the route handler, so a
  * limited request never reaches business logic (e.g. no password verification on /login).
  */
 fun Route.rateLimitByIp(policy: RateLimitPolicy, build: Route.() -> Unit): Route {
-    val rateLimiting = application.attributes.getOrNull(RateLimitingKey)
-        ?: throw IllegalStateException("configureRateLimiting() must run before routing is configured")
+    val rateLimiting = application.rateLimiting()
 
     val route = createChild(RateLimitRouteSelector(policy))
     route.install(IpRateLimitInterceptor) {
@@ -81,28 +91,42 @@ private val IpRateLimitInterceptor = createRouteScopedPlugin("IpRateLimit", ::Ip
         val decision = try {
             service.tryConsume(policy, clientIp)
         } catch (e: RateLimitStoreUnavailableException) {
-            // Fail closed: without Redis the limit cannot be enforced, and silently skipping it
-            // would turn the protection off. Only the rate-limited auth endpoints are affected.
-            call.application.log.error("Rate limit check failed for ${policy.bucket}", e)
-            call.respond(
-                HttpStatusCode.ServiceUnavailable,
-                ErrorResponse("Service temporarily unavailable. Please try again later.")
-            )
+            call.respondRateLimitUnavailable(policy, e)
             return@on
         }
 
         if (decision is RateLimitDecision.Limited) {
-            call.response.header(HttpHeaders.RetryAfter, decision.retryAfterSeconds)
-            call.respond(
-                HttpStatusCode.TooManyRequests,
-                RateLimitErrorResponse(
-                    error = "Too many requests. Please try again later.",
-                    code = "RATE_LIMITED",
-                    retryAfterSeconds = decision.retryAfterSeconds
-                )
-            )
+            call.respondRateLimited(decision.retryAfterSeconds)
         }
     }
+}
+
+/** The one 429 contract shared by every limiter: Retry-After header + [RateLimitErrorResponse]. */
+suspend fun ApplicationCall.respondRateLimited(retryAfterSeconds: Long) {
+    response.header(HttpHeaders.RetryAfter, retryAfterSeconds)
+    respond(
+        HttpStatusCode.TooManyRequests,
+        RateLimitErrorResponse(
+            error = "Too many requests. Please try again later.",
+            code = "RATE_LIMITED",
+            retryAfterSeconds = retryAfterSeconds
+        )
+    )
+}
+
+/**
+ * Fail closed: without Redis a limit cannot be enforced, and silently skipping it would turn the
+ * protection off. Only the rate-limited auth endpoints are affected.
+ */
+suspend fun ApplicationCall.respondRateLimitUnavailable(
+    policy: RateLimitPolicy,
+    cause: RateLimitStoreUnavailableException
+) {
+    application.log.error("Rate limit check failed for ${policy.name}", cause)
+    respond(
+        HttpStatusCode.ServiceUnavailable,
+        ErrorResponse("Service temporarily unavailable. Please try again later.")
+    )
 }
 
 /** Runs in the route's Plugins phase, before the handler; stops the pipeline once responded. */

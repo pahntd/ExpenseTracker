@@ -14,8 +14,13 @@ import com.pahntd.expensetracker.auth.JwtConfig
 import com.pahntd.expensetracker.auth.RefreshTokenGenerator
 import com.pahntd.expensetracker.auth.TokenService
 import com.pahntd.expensetracker.model.RefreshToken
+import com.pahntd.expensetracker.plugins.accountLoginLimiter
 import com.pahntd.expensetracker.plugins.rateLimitByIp
+import com.pahntd.expensetracker.plugins.respondRateLimitUnavailable
+import com.pahntd.expensetracker.plugins.respondRateLimited
+import com.pahntd.expensetracker.ratelimit.LoginAttempt
 import com.pahntd.expensetracker.ratelimit.RateLimitPolicy
+import com.pahntd.expensetracker.ratelimit.RateLimitStoreUnavailableException
 import com.pahntd.expensetracker.repository.ExposedCategoryRepository
 import com.pahntd.expensetracker.repository.ExposedRefreshTokenRepository
 import com.pahntd.expensetracker.repository.ExposedUserRepository
@@ -85,10 +90,26 @@ fun Application.configureRouting() {
                     categoryRepository = categoryRepository,
                     passwordHasher = passwordHasher
                 )
-                val user = authService.login(
-                    email = request.email,
-                    password = request.password
-                )
+                // Per-account limit, after the IP limit above. Invalid credentials still throw from
+                // authService.login (unchanged 400); only an exhausted account gets 429.
+                val attempt = try {
+                    call.application.accountLoginLimiter.attempt(request.email) {
+                        authService.login(
+                            email = request.email,
+                            password = request.password
+                        )
+                    }
+                } catch (e: RateLimitStoreUnavailableException) {
+                    call.respondRateLimitUnavailable(RateLimitPolicy.LOGIN_ACCOUNT, e)
+                    return@post
+                }
+                val user = when (attempt) {
+                    is LoginAttempt.Success -> attempt.value
+                    is LoginAttempt.Limited -> {
+                        call.respondRateLimited(attempt.retryAfterSeconds)
+                        return@post
+                    }
+                }
 
                 val tokenService = TokenService()
 

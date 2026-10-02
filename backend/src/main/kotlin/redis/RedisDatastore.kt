@@ -37,6 +37,10 @@ class RedisDatastore private constructor(
         ).await()
     }
 
+    suspend fun delete(key: String) {
+        commands.del(key).await()
+    }
+
     override fun close() {
         connection.close()
         client.shutdown(Duration.ZERO, SHUTDOWN_TIMEOUT)
