@@ -78,6 +78,9 @@ class StatisticsFragment : Fragment() {
             )
         )
         // filter = false: show the label without AutoCompleteTextView narrowing the option list.
+        // The layout sets saveEnabled="false" on actTimeFilter: otherwise, returning to this tab,
+        // onViewStateRestored() (after onViewCreated) would restore the text WITH filtering and
+        // shrink the dropdown to the current option only. The label always comes from prefs here.
         binding.actTimeFilter.setText(savedTimeFilter().label, false)
 
         binding.actTimeFilter.setOnItemClickListener { _, _, position, _ ->
