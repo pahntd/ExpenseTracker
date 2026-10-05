@@ -2,6 +2,10 @@
     <string name="app_name">Expense Tracker</string>
     <string name="settings_section_privacy">Privacy</string>
     <string name="settings_privacy_options">Privacy options</string>
+    <string name="settings_privacy_policy">Privacy Policy</string>
+    <string name="settings_privacy_policy_open_failed">No browser found to open the Privacy Policy.</string>
+    <!-- Public Privacy Policy page; must match the URL entered in Play Console. -->
+    <string name="privacy_policy_url" translatable="false">https://pahntd.github.io/Expense-Tracker-Legal/privacy.html</string>
     <string name="settings_delete_account">Delete Account</string>
     <string name="settings_deleting_account">Deleting account…</string>
     <string name="settings_delete_account_dialog_title">Delete account?</string>

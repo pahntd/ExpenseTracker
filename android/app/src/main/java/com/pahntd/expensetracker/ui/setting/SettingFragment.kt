@@ -1,6 +1,9 @@
 package com.pahntd.expensetracker.ui.setting
 
+import android.content.ActivityNotFoundException
 import android.content.Context
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
@@ -73,6 +76,9 @@ class SettingFragment : Fragment() {
         binding.tvLogout.setOnClickListener {
             viewModel.onLogoutClick()
         }
+        binding.tvPrivacyPolicy.setOnClickListener {
+            openPrivacyPolicy()
+        }
         binding.tvPrivacyOptions.setOnClickListener {
             showPrivacyOptionsForm()
         }
@@ -90,7 +96,21 @@ class SettingFragment : Fragment() {
 
     private fun updatePrivacyOptionsVisibility() {
         val binding = _binding ?: return
-        binding.layoutPrivacy.isVisible = adsConsentManager.isPrivacyOptionsRequired()
+        binding.tvPrivacyOptions.isVisible = adsConsentManager.isPrivacyOptionsRequired()
+    }
+
+    /** Opens the public Privacy Policy page in the user's browser. */
+    private fun openPrivacyPolicy() {
+        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(getString(R.string.privacy_policy_url)))
+        try {
+            startActivity(intent)
+        } catch (e: ActivityNotFoundException) {
+            Toast.makeText(
+                requireContext(),
+                R.string.settings_privacy_policy_open_failed,
+                Toast.LENGTH_SHORT
+            ).show()
+        }
     }
 
     private fun showPrivacyOptionsForm() {

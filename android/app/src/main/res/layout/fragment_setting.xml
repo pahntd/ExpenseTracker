@@ -53,14 +53,14 @@
 
         </LinearLayout>
 
-        <!-- Privacy: only shown when UMP requires a privacy options entry point (see SettingFragment) -->
+        <!-- Privacy: Privacy Policy is always shown; Privacy options only when UMP requires a
+             privacy options entry point (see SettingFragment) -->
 
         <LinearLayout
             android:id="@+id/layoutPrivacy"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:visibility="gone">
+            android:orientation="vertical">
 
             <TextView
                 android:layout_width="wrap_content"
@@ -71,7 +71,7 @@
                 android:textStyle="bold" />
 
             <TextView
-                android:id="@+id/tvPrivacyOptions"
+                android:id="@+id/tvPrivacyPolicy"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
@@ -80,8 +80,21 @@
                 android:focusable="true"
                 android:gravity="center_vertical"
                 android:minHeight="48dp"
-                android:text="@string/settings_privacy_options"
+                android:text="@string/settings_privacy_policy"
                 android:textSize="16sp" />
+
+            <TextView
+                android:id="@+id/tvPrivacyOptions"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="?attr/selectableItemBackground"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center_vertical"
+                android:minHeight="48dp"
+                android:text="@string/settings_privacy_options"
+                android:textSize="16sp"
+                android:visibility="gone" />
 
         </LinearLayout>
 
