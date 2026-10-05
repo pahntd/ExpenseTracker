@@ -74,7 +74,8 @@ android {
                 bannerAdUnitId = "ca-app-pub-5720492551902022/4018232017",
                 rewardedAdUnitId = "ca-app-pub-5720492551902022/7003488007"
             )
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"

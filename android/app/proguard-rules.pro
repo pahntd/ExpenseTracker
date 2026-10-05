@@ -1,21 +1,23 @@
-# Add project specific ProGuard rules here.
-# You can control the set of applied configuration files using the
-# proguardFiles setting in build.gradle.
+# App-specific R8 rules for the release build.
 #
-# For more details, see
-#   http://developer.android.com/guide/developing/tools/proguard.html
+# Most libraries here ship their own consumer rules, which R8 applies automatically:
+# Gson (META-INF/proguard/gson.pro), Retrofit, Room, WorkManager, hilt-work, Tink, OkHttp.
+# Only add a rule below when the app needs something those rules do not cover.
 
-# If your project uses WebView with JS, uncomment the following
-# and specify the fully qualified class name to the JavaScript interface
-# class:
-#-keepclassmembers class fqcn.of.javascript.interface.for.webview {
-#   public *;
-#}
+# --- Gson DTOs (Retrofit GsonConverterFactory) ---
+# Gson's bundled rules keep @SerializedName fields of referenced classes. The response DTOs are
+# Kotlin data classes with no no-args constructor, so Gson creates them via Unsafe and app code never
+# calls their constructors. Under R8 full mode such classes can be treated as never instantiated
+# (made abstract / field reads folded), so keep their constructors and annotated fields. Names may
+# still be obfuscated: every field carries an explicit @SerializedName.
+-keep,allowobfuscation class com.pahntd.expensetracker.data.remote.dto.** {
+    <init>(...);
+    @com.google.gson.annotations.SerializedName <fields>;
+}
 
-# Uncomment this to preserve the line number information for
-# debugging stack traces.
-#-keepattributes SourceFile,LineNumberTable
-
-# If you keep the line number information, uncomment this to
-# hide the original source file name.
-#-renamesourcefileattribute SourceFile
+# --- Proto DataStore (protobuf-javalite) ---
+# Lite runtime resolves message fields reflectively by their Java names (e.g. "accessToken_"), and
+# protobuf-javalite 3.25.x ships no consumer rules. Scoped to the generated session message package.
+-keepclassmembers class com.pahntd.expensetracker.data.auth.session.** extends com.google.protobuf.GeneratedMessageLite {
+    <fields>;
+}

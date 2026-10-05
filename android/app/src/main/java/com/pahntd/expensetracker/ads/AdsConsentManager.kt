@@ -37,10 +37,6 @@ class AdsConsentManager @Inject constructor(
 
     /** Whether Settings must offer a "Privacy options" entry (e.g. for EEA users). */
     fun isPrivacyOptionsRequired(): Boolean = runCatching {
-        Log.e(
-            "AdsConsent",
-            "privacyOptionsRequirementStatus = ${consentInformation.privacyOptionsRequirementStatus}"
-        )
         consentInformation.privacyOptionsRequirementStatus ==
             ConsentInformation.PrivacyOptionsRequirementStatus.REQUIRED
     }.getOrDefault(false)
