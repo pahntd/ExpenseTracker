@@ -100,7 +100,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:text="Version 2.0.0"
+            android:text="Version 1.0.0"
             android:textSize="14sp" />
 
         <TextView
@@ -108,7 +108,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
-            android:text="Expense Tracker&#10;Built with Kotlin"
+            android:text="Expense Tracker"
             android:textSize="14sp" />
 
         <!-- Logout -->
